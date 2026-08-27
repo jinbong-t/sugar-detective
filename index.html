@@ -1,0 +1,1043 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>당류 탐정 대탈출</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Serif+KR:wght@700&family=Orbitron:wght@700&display=swap');
+
+    :root {
+      --bg-dark: #121212; --bg-panel: #242424; --text-main: #e0e0e0;
+      --accent: #c9302c; --accent-hover: #ac2925;
+      --paper: #f4f1ea; --paper-text: #222; --report-bg: #e8e8e8;
+    }
+
+    body {
+      margin: 0; padding: 0; background-color: var(--bg-dark); color: var(--text-main);
+      font-family: 'Gowun Dodum', sans-serif; overflow-x: hidden;
+    }
+
+    /* 태블릿 가로 모드 레이아웃 */
+    .container {
+      max-width: 1400px; margin: 0 auto; padding: 20px;
+      min-height: 100vh; position: relative;
+    }
+
+    .page {
+      display: none; animation: slideIn 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .page.active { display: flex; gap: 30px; align-items: stretch; height: 90vh;}
+
+    .left-pane {
+      flex: 1.2; background: var(--bg-panel); border-radius: 12px; padding: 25px;
+      box-shadow: inset 0 0 25px rgba(0,0,0,0.8); border: 2px solid #444;
+      display: flex; flex-direction: column; justify-content: center; text-align: center;
+      overflow-y: auto;
+    }
+    .right-pane {
+      flex: 1.5; background: #2a2a2a; border-radius: 12px; padding: 35px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6); overflow-y: auto; 
+    }
+
+    .question-img { max-width: 100%; border-radius: 8px; border: 1px solid #555; margin-bottom: 15px; }
+
+    /* 도입부 신문 기사 */
+    .newspaper {
+      background-color: var(--paper); color: var(--paper-text); padding: 35px;
+      border: 6px double #333; font-family: 'Noto Serif KR', serif; text-align: left;
+    }
+    .newspaper h1 { font-size: 34px; border-bottom: 3px solid #333; padding-bottom: 15px; margin-top: 0;}
+    .newspaper p { font-size: 19px; line-height: 1.7; }
+
+    /* UI 요소 */
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 18px; margin: 10px 0 25px; border: 2px solid #555;
+      background: #1e1e1e; color: #fff; font-size: 19px; border-radius: 8px; box-sizing: border-box;
+    }
+    textarea { height: 140px; resize: none; }
+    
+    button.action-btn {
+      background-color: var(--accent); color: white; border: none;
+      padding: 20px 45px; font-size: 21px; font-weight: bold; border-radius: 8px;
+      cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 6px 18px rgba(201, 48, 44, 0.4); margin-top:10px;
+    }
+    button.action-btn:hover { background-color: var(--accent-hover); transform: translateY(-3px); }
+
+    .sub-q { background: #333; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 6px solid var(--accent); }
+    .sub-q h4 { margin: 0 0 12px 0; font-size: 20px; color: #ffcccc; }
+    
+    .choice-label {
+      display: flex; align-items: center; background: #444; padding: 18px; margin: 10px 0;
+      border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 17px; border: 2px solid transparent;
+    }
+    .choice-label:hover { background: #555; border-color: #888; }
+    .choice-label input { margin-right: 15px; transform: scale(1.5); }
+
+    /* 수사 보고서 스타일 */
+    .investigation-report {
+      background: var(--report-bg); color: #111; padding: 20px; border-radius: 8px; margin-bottom: 20px;
+      border: 1px solid #999; text-align: left; position: relative; font-family: 'Noto Serif KR', serif;
+    }
+    .report-stamp {
+      position: absolute; top: 10px; right: 10px; color: #d9534f; border: 3px solid #d9534f;
+      padding: 5px 10px; border-radius: 5px; font-weight: bold; transform: rotate(15deg); font-size: 14px;
+    }
+
+    /* 힌트 탭 (처음엔 숨김 처리) */
+    .hint-tab {
+      display: none; 
+      background: #3a2a10; color: #ffcc00; padding: 14px; margin-top: 25px;
+      border-radius: 8px; cursor: pointer; font-size: 17px; text-align: center;
+      border: 1px dashed #ffcc00; font-weight: bold; transition: 0.3s;
+      animation: fadeIn 0.5s;
+    }
+    .hint-tab:hover { background: #4a3515; }
+    .hint-content { display: none; margin-top: 12px; padding: 18px; background: #222; border-left: 5px solid #ffcc00; font-size: 16px; color: #eee;}
+
+    /* 스테이지 전환 */
+    .stage-transition {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.98); color: #fff; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 1000;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .stage-transition.show { opacity: 1; pointer-events: auto; }
+    .stage-title { font-size: 70px; font-weight: bold; color: var(--accent); text-shadow: 0 0 25px red; letter-spacing: 6px; transform: scale(0.5); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .stage-transition.show .stage-title { transform: scale(1); }
+
+    /* 수사 현장 진입 효과 */
+    .investigation-access {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle, #2a2a2a, #000); color: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+    .investigation-access.show { opacity: 1; pointer-events: auto; }
+    
+    .scan-container {
+      position: relative; width: 150px; height: 150px; margin-bottom: 30px;
+      border: 4px solid #555; border-radius: 20px; background: #111;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8); transition: opacity 0.3s;
+    }
+    .scan-icon { font-size: 70px; filter: grayscale(100%); opacity: 0.6; }
+    .scanner-line {
+      position: absolute; top: 0; left: 0; width: 100%; height: 6px;
+      background: #0f0; box-shadow: 0 0 20px #0f0;
+      animation: scanAnim 1.5s infinite linear;
+    }
+    .access-text {
+      font-size: 28px; color: #ffcc00; letter-spacing: 2px; text-shadow: 0 0 10px #ffcc00;
+      margin-top: 10px; font-weight: bold; transition: opacity 0.3s;
+    }
+    .access-granted {
+      position: absolute; font-size: 60px; font-weight: bold; color: #d9534f;
+      border: 8px solid #d9534f; padding: 20px 40px; border-radius: 15px;
+      transform: scale(3); opacity: 0; pointer-events: none; text-align: center;
+      text-shadow: 0 0 20px rgba(217, 83, 79, 0.5); box-shadow: inset 0 0 20px rgba(217, 83, 79, 0.3);
+    }
+    .access-granted.stamp { animation: stampAnim 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    /* 도어락 키패드 */
+    .vault-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+    #password-display { font-family: 'Orbitron', sans-serif; font-size: 55px; letter-spacing: 20px; color: #0f0; background: #000; padding: 20px; border-radius: 12px; border: 4px solid #333; margin-bottom: 40px; text-shadow: 0 0 15px #0f0; text-align: center; width: 300px;}
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; width: 400px;}
+    .key {
+      background: linear-gradient(#555, #333); border: 2px solid #222; border-radius: 15px; height: 100px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 0 #111, 0 6px 20px rgba(0,0,0,0.5); color: #fff; transition: 0.1s;
+    }
+    .key:active { box-shadow: 0 3px 0 #111; transform: translateY(5px); background: linear-gradient(#444, #222); }
+    .key.action { background: linear-gradient(var(--accent), #8a1f1c); box-shadow: 0 8px 0 #52100f; }
+    .key.action:active { box-shadow: 0 3px 0 #52100f; }
+
+    /* 성공 화면 애니메이션 */
+    .success-flash {
+      position: fixed; top:0; left:0; width:100%; height:100%; background: #fff;
+      z-index: 2000; display: none; animation: flashEffect 3s forwards;
+    }
+    .door-open { animation: doorOpenAnim 2.5s forwards ease-in-out; }
+
+    /* 키프레임들 */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes flashEffect { 0% { opacity: 1; } 40% { opacity: 1; } 100% { opacity: 0; pointer-events: none; } }
+    @keyframes doorOpenAnim { 0% { transform: perspective(1500px) rotateY(0deg); opacity: 1; } 100% { transform: perspective(1500px) rotateY(-90deg); opacity: 0; pointer-events: none; } }
+    @keyframes scanAnim { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+    @keyframes stampAnim { 0% { transform: scale(3); opacity: 0; } 100% { transform: scale(1) rotate(-10deg); opacity: 1; } }
+
+    /* 화려한 엔딩 시퀀스 UI */
+    .grand-finale-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 3000; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      color: #0f0; font-family: 'Orbitron', monospace; overflow: hidden;
+    }
+    
+    .matrix-bg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,255,0,0.1) 0px, rgba(0,255,0,0.1) 1px, transparent 1px, transparent 3px);
+      opacity: 0.3; pointer-events: none;
+    }
+    
+    .warning-text {
+      font-size: 60px; color: #ff3366; font-weight: bold; text-shadow: 0 0 30px #ff3366;
+      animation: blink 0.5s infinite alternate; letter-spacing: 5px; margin-bottom: 20px;
+    }
+    
+    .decrypting-text { font-size: 24px; margin-bottom: 40px; letter-spacing: 2px; }
+    
+    .id-card-container {
+      position: relative; width: 500px; height: 300px;
+      background: linear-gradient(135deg, #111, #222);
+      border: 3px solid #00ffcc; border-radius: 15px;
+      box-shadow: 0 0 50px rgba(0,255,204,0.4);
+      display: flex; flex-direction: column; opacity: 0; transform: scale(0.5);
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+    
+    .id-card-container.reveal {
+      animation: cardReveal 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    .id-header {
+      background: #00ffcc; color: #000; padding: 10px; text-align: center;
+      font-weight: bold; font-size: 20px; border-top-left-radius: 10px; border-top-right-radius: 10px;
+      letter-spacing: 2px;
+    }
+    
+    .id-body { display: flex; padding: 20px; flex: 1; align-items: center; }
+    
+    .id-photo {
+      width: 100px; height: 120px; border: 2px solid #555; background: #000;
+      display: flex; align-items: center; justify-content: center; font-size: 50px;
+      margin-right: 25px;
+    }
+    
+    .id-info { flex: 1; color: #fff; text-align: left; }
+    .id-info p { margin: 10px 0; font-size: 22px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+    .id-info span { color: #00ffcc; font-size: 16px; display: block; margin-bottom: 2px; }
+    
+    .stamp-overlay {
+      position: absolute; right: 20px; bottom: 20px;
+      color: #ff3366; border: 5px solid #ff3366; padding: 10px 20px;
+      font-size: 28px; font-weight: bold; transform: rotate(-15deg) scale(3);
+      border-radius: 10px; opacity: 0; text-shadow: 0 0 10px rgba(255,51,102,0.5);
+    }
+    
+    .stamp-overlay.stamp-it {
+      animation: stampAnim 0.6s 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .congratulations-msg {
+      margin-top: 40px; font-size: 30px; color: #fff; font-family: 'Gowun Dodum', sans-serif;
+      opacity: 0; transition: opacity 1s; text-align: center;
+    }
+
+    @keyframes blink { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes cardReveal { to { opacity: 1; transform: scale(1); } }
+
+    /* 인트로 비디오 UI */
+    #intro-screen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 5000; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; transition: opacity 1s;
+    }
+    #intro-video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .start-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 5010;
+    }
+    .start-btn {
+      background: transparent; color: #ffcc00; border: 3px solid #ffcc00;
+      padding: 20px 50px; font-size: 30px; font-weight: bold; border-radius: 10px;
+      cursor: pointer; transition: 0.3s; font-family: 'Gowun Dodum', sans-serif;
+      animation: pulseBtn 1.5s infinite alternate; text-shadow: 0 0 10px #ffcc00;
+      box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+    }
+    .start-btn:hover { background: #ffcc00; color: #000; transform: scale(1.1); }
+    .skip-btn {
+      position: absolute; bottom: 30px; right: 30px; z-index: 5005;
+      background: rgba(255,255,255,0.2); color: #fff; border: 1px solid #fff;
+      padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer;
+      display: none; transition: 0.3s;
+    }
+    .skip-btn:hover { background: rgba(255,255,255,0.4); }
+    @keyframes pulseBtn { from { transform: scale(1); } to { transform: scale(1.05); } }
+  </style>
+</head>
+<body>
+
+  <!-- 인트로 비디오 스크린 -->
+  <div id="intro-screen">
+    <div class="start-overlay" id="start-overlay">
+      <button class="start-btn" onclick="startIntro()">🚨 수사망 접속하기</button>
+    </div>
+    <video id="intro-video" playsinline>
+      <source src="🚨_인트로_영상_수사관_실종과_남겨진_단서_컨셉_.mp4" type="video/mp4">
+    </video>
+    <button class="skip-btn" id="skip-btn" onclick="skipIntro()">영상 건너뛰기 ⏭</button>
+  </div>
+
+  <audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+  <audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"></audio>
+  <audio id="snd-keypad" src="https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3"></audio>
+  <audio id="snd-door" src="https://assets.mixkit.co/active_storage/sfx/14/14-preview.mp3"></audio>
+  <audio id="snd-success" src="https://assets.mixkit.co/active_storage/sfx/1998/1998-preview.mp3"></audio>
+
+  <div class="stage-transition" id="stage-ui"><div class="stage-title" id="stage-msg">STAGE CLEAR</div></div>
+  <div class="success-flash" id="success-flash"></div>
+
+
+  <div class="investigation-access" id="loading-ui">
+    <div class="scan-container" id="scan-box">
+      <div class="scan-icon">🚨</div>
+      <div class="scanner-line"></div>
+    </div>
+    <div class="access-text" id="access-text">수사망 접근 요청 중...</div>
+    <div class="access-granted" id="access-granted">ACCESS GRANTED<br><span style="font-size:32px; color:#fff; text-shadow:none;">수사 현장 진입 승인</span></div>
+  </div>
+
+  <div class="container" id="main-container">
+    
+    <div id="page-1" class="page active">
+      <div class="left-pane">
+        <img src="images/WJzjFN4.png" class="question-img" alt="수사관 실종">
+        <h2 style="color: var(--accent); margin-top:20px; font-size:26px;">당류 탐정 수사대 모집</h2>
+        <p style="font-size:18px;">식품안전나라 수석 수사관이 남긴 단서를 해독하라!</p>
+      </div>
+      <div class="right-pane">
+        <div class="newspaper">
+          <h1>[속보] 수사관 실종, 남겨진 암호!</h1>
+          <p>어젯밤, 식품 속 당류의 비밀을 파헤치던 수석 수사관이 13개의 수사 파일만 남긴 채 사라졌다. 현장에 남겨진 흔적을 보아 범인은 치밀하게 당류의 함정을 파놓은 것이 분명하다. 이 암호를 모두 해독해야만 수사관이 갇힌 <strong>비밀 밀실</strong>을 열 수 있다!</p>
+          <hr style="border-color:#ccc; margin:25px 0;">
+          <label style="font-size: 19px; font-weight: bold; display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" id="pledge" style="width:28px; height:28px;"> 
+            나는 수사대원으로서 협동하여 사건을 끝까지 해결할 것을 서약합니다.
+          </label>
+        </div>
+        <div style="margin-top: 30px;">
+          <input type="text" id="teamName" placeholder="우리 조 이름 입력 (예: 1조)">
+          <button class="action-btn" onclick="goNext(1)">수사망 접속하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-2" class="page">
+      <div class="left-pane">
+        <img src="images/EkrfcrO.jpeg" class="question-img" alt="신원 확인">
+        <h2 style="color: var(--accent); margin-top:20px; font-size:26px;">현장 접근 권한 확인</h2>
+        <p style="font-size:18px;">보안 구역 입장을 위해 대원 정보를 등록하십시오.</p>
+      </div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">수사대원 신원 등록</h2>
+        <p>현장 파일 열람을 위해 본인의 학번과 이름을 정확히 기입해주시기 바랍니다.</p>
+        <div style="margin-top: 30px;">
+          <input type="number" id="studentId" placeholder="학번 4자리 (예: 3501)" style="margin-bottom: 20px;">
+          <input type="text" id="studentName" placeholder="이름 (예: 변우석)" style="margin-bottom: 20px;">
+          <button class="action-btn" onclick="startEscape()">수사 현장 진입하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-3" class="page">
+      <div class="left-pane">
+        <img src="images/x0mV4Vi.png" class="question-img">
+        <h3 style="color:#ffcc00; font-size: 24px;">STAGE 1<br>수사 파일 속 당류 암호 판독</h3>
+      </div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q1] 수사 파일 진위 여부 파악</h2>
+        <p>다음 파일 내용의 맞고 틀림(O/X)을 정확히 판별하라.</p>
+        
+        <div class="sub-q">
+          <h4>파일 A: "단당류는 하나의 당으로 이루어진 가장 단순한 당이다."</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q1_a" value="O" style="transform:scale(1.5); margin-right:10px;"> O</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q1_a" value="X" style="transform:scale(1.5); margin-right:10px;"> X</label>
+        </div>
+        <div class="sub-q">
+          <h4>파일 B: "이당류는 단당류 세 개가 결합한 구조이다."</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q1_b" value="O" style="transform:scale(1.5); margin-right:10px;"> O</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q1_b" value="X" style="transform:scale(1.5); margin-right:10px;"> X</label>
+        </div>
+        <div class="sub-q">
+          <h4>파일 C: "포도당, 과당, 갈락토스는 모두 단당류에 해당한다."</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q1_c" value="O" style="transform:scale(1.5); margin-right:10px;"> O</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q1_c" value="X" style="transform:scale(1.5); margin-right:10px;"> X</label>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h1')">🔍 수사 힌트 확인하기</div>
+        <div id="h1" class="hint-content">교재 06-2 p.53 '탄수화물과 당류' 설명 참조. 이당류는 이름에서 힌트를 얻을 것(二).</div>
+        <button class="action-btn" onclick="checkAnswers('page-3', {s1q1_a:'O', s1q1_b:'X', s1q1_c:'O'})">판독 완료</button>
+      </div>
+    </div>
+
+    <div id="page-4" class="page">
+      <div class="left-pane"><img src="images/zhY18OC.png" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q2] 이당류의 결합 암호</h2>
+        <p>수사 파일의 빈칸을 채워 이당류의 결합 구조를 완성하라.</p>
+        
+        <div class="sub-q">
+          <h4>설탕 = 포도당 + ( ① )</h4>
+          <select id="s1q2_1"><option value="">선택하세요</option><option value="과당">과당</option><option value="갈락토스">갈락토스</option><option value="포도당">포도당</option></select>
+        </div>
+        <div class="sub-q">
+          <h4>맥아당 = 포도당 + ( ② )</h4>
+          <select id="s1q2_2"><option value="">선택하세요</option><option value="과당">과당</option><option value="갈락토스">갈락토스</option><option value="포도당">포도당</option></select>
+        </div>
+        <div class="sub-q">
+          <h4>유당 = 포도당 + ( ③ )</h4>
+          <select id="s1q2_3"><option value="">선택하세요</option><option value="과당">과당</option><option value="갈락토스">갈락토스</option><option value="포도당">포도당</option></select>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h2')">🔍 수사 힌트 확인하기</div>
+        <div id="h2" class="hint-content">교재 06-2 p.53 이당류 표 참고. 포도당은 모든 이당류의 기본!</div>
+        <button class="action-btn" onclick="checkSelects('page-4', {s1q2_1:'과당', s1q2_2:'포도당', s1q2_3:'갈락토스'})">암호 입력</button>
+      </div>
+    </div>
+
+    <div id="page-5" class="page">
+      <div class="left-pane"><img src="images/oEtnPCU.png" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q3] 자연당 vs 첨가당 진술서</h2>
+        <p>두 용의자의 진술 중, <strong>교재 내용에 비추어 옳은 진술을 한 사람</strong>은 누구인가?</p>
+        
+        <label class="choice-label"><input type="radio" name="s1q3" value="A"> <span>용의자 A: "자연당은 곡류, 과일, 우유에 들어 있는 당이라 많이 먹어도 문제없다."</span></label>
+        <label class="choice-label"><input type="radio" name="s1q3" value="B"> <span>용의자 B: "자연당은 자연 식품에서 섭취하는 당이고, 첨가당은 가공·조리 과정에서 별도로 첨가되는 당이다."</span></label>
+
+        <div class="hint-tab" onclick="toggleHint('h3')">🔍 수사 힌트 확인하기</div>
+        <div id="h3" class="hint-content">자연당도 많이 먹으면 섭취량 초과로 문제가 될 수 있다. (p.53 참고)</div>
+        <button class="action-btn" onclick="checkAnswers('page-5', {s1q3:'B'})">진술 검증</button>
+      </div>
+    </div>
+
+    <div id="page-6" class="page">
+      <div class="left-pane"><img src="images/BIdlnVr.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q4] 성분표 속 첨가당 색출</h2>
+        <p>다음 목록 중 <strong>첨가당</strong>에 해당하는 것을 모두 선택하라. (정답 3개)</p>
+        
+        <label class="choice-label"><input type="checkbox" id="s1q4_1"> ① 정제수</label>
+        <label class="choice-label"><input type="checkbox" id="s1q4_2"> ② 설탕</label>
+        <label class="choice-label"><input type="checkbox" id="s1q4_3"> ③ 액상과당</label>
+        <label class="choice-label"><input type="checkbox" id="s1q4_4"> ④ 구연산</label>
+        <label class="choice-label"><input type="checkbox" id="s1q4_5"> ⑤ 물엿</label>
+        <label class="choice-label"><input type="checkbox" id="s1q4_6"> ⑥ 사과 속 과당</label>
+
+        <div class="hint-tab" onclick="toggleHint('h4')">🔍 수사 힌트 확인하기</div>
+        <div id="h4" class="hint-content">정제수, 구연산은 당류가 아니다. 사과 속 과당은 자연당이다.</div>
+        <button class="action-btn" onclick="checkMultiCheckbox('page-6', ['s1q4_2', 's1q4_3', 's1q4_5'], ['s1q4_1', 's1q4_4', 's1q4_6'])">색출 완료</button>
+      </div>
+    </div>
+
+    <div id="page-7" class="page">
+      <div class="left-pane"><img src="images/HdIbCit.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q5] 당류의 기능 현장 보고서</h2>
+        <p>보고서 내용의 맞고 틀림(O/X)을 판별하라.</p>
+        
+        <div class="sub-q">
+          <h4>당류는 체내에서 1g당 4kcal의 에너지를 낸다.</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q5_a" value="O" style="transform:scale(1.5); margin-right:10px;"> O</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q5_a" value="X" style="transform:scale(1.5); margin-right:10px;"> X</label>
+        </div>
+        <div class="sub-q">
+          <h4>포도당은 뇌를 포함한 신경세포의 주 에너지원이다.</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q5_b" value="O" style="transform:scale(1.5); margin-right:10px;"> O</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q5_b" value="X" style="transform:scale(1.5); margin-right:10px;"> X</label>
+        </div>
+        <div class="sub-q">
+          <h4>과당은 단당류 중 단맛이 가장 약하다.</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q5_c" value="O" style="transform:scale(1.5); margin-right:10px;"> O</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q5_c" value="X" style="transform:scale(1.5); margin-right:10px;"> X</label>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h5')">🔍 수사 힌트 확인하기</div>
+        <div id="h5" class="hint-content">과당은 이름처럼 과일에 많으며, 단맛이 '가장 강한' 특징이 있다.</div>
+        <button class="action-btn" onclick="checkAnswers('page-7', {s1q5_a:'O', s1q5_b:'O', s1q5_c:'X'})">보고서 결재</button>
+      </div>
+    </div>
+
+    <div id="page-8" class="page">
+      <div class="left-pane"><img src="images/L9AN1FO.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q6] 과잉섭취 경고문</h2>
+        <p>당류를 과잉 섭취하면 발생할 수 있는 문제 3가지를 고르시오.</p>
+        
+        <label class="choice-label"><input type="checkbox" id="s1q6_1"> ① 충치</label>
+        <label class="choice-label"><input type="checkbox" id="s1q6_2"> ② 근육 강화</label>
+        <label class="choice-label"><input type="checkbox" id="s1q6_3"> ③ 고혈압</label>
+        <label class="choice-label"><input type="checkbox" id="s1q6_4"> ④ 당뇨병</label>
+        <label class="choice-label"><input type="checkbox" id="s1q6_5"> ⑤ 키 성장 촉진</label>
+
+        <div class="hint-tab" onclick="toggleHint('h6')">🔍 수사 힌트 확인하기</div>
+        <div id="h6" class="hint-content">p.55 그림 6.2.2 참고. 당류는 근육이나 키 성장과는 무관하며 질병의 원인이 된다.</div>
+        <button class="action-btn" onclick="checkMultiCheckbox('page-8', ['s1q6_1', 's1q6_3', 's1q6_4'], ['s1q6_2', 's1q6_5'])">경고문 완성</button>
+      </div>
+    </div>
+
+    <div id="page-9" class="page">
+      <div class="left-pane"><img src="images/mnLr024.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q7] 성분표 해독 훈련</h2>
+        <p>성분 목록: <strong>[정제수/액상과당/설탕/구연산/향료]</strong></p>
+        
+        <div class="sub-q">
+          <h4>① 이 목록에서 당류에 해당하는 성분은 몇 개인가?</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q7_a" value="1" style="transform:scale(1.5); margin-right:10px;"> 1개</label>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q7_a" value="2" style="transform:scale(1.5); margin-right:10px;"> 2개</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q7_a" value="3" style="transform:scale(1.5); margin-right:10px;"> 3개</label>
+        </div>
+        <div class="sub-q">
+          <h4>② 두 당류 중 이 음료에 더 많이 들어간 것은?</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s1q7_b" value="설탕" style="transform:scale(1.5); margin-right:10px;"> 설탕</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s1q7_b" value="액상과당" style="transform:scale(1.5); margin-right:10px;"> 액상과당</label>
+        </div>
+        <div class="sub-q">
+          <h4>③ 그 이유로 가장 알맞은 것은?</h4>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s1q7_c" value="A"> <span>액상과당이 설탕보다 더 달기 때문이다.</span></label>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s1q7_c" value="B"> <span>식품 성분표는 함량이 많은 순서대로 표시되기 때문이다.</span></label>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h7')">🔍 수사 힌트 확인하기</div>
+        <div id="h7" class="hint-content">순서가 앞에 있을수록 함량이 많다는 규칙을 기억하라.</div>
+        <button class="action-btn" onclick="checkAnswers('page-9', {s1q7_a:'2', s1q7_b:'액상과당', s1q7_c:'B'}, 'STAGE 2 진입!')">해독 완료</button>
+      </div>
+    </div>
+
+    <div id="page-10" class="page">
+      <div class="left-pane">
+        <img src="images/bvwKrl4.jpeg" class="question-img">
+        <h3 style="color:#0f0; font-size: 24px;">STAGE 2<br>범행 현장 증거 분석 (계산기 허용)</h3>
+      </div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q8] 수사 기록 1호: 대원 민지의 탄산음료</h2>
+        
+        <div class="investigation-report">
+          <div class="report-stamp">CONFIDENTIAL</div>
+          <p><strong>[관찰 기록]</strong> 민지 대원은 500mL짜리 탄산음료 한 병을 모두 마신 것으로 확인됨.</p>
+          <p><strong>[단서 확보]</strong> 음료 성분표: 1회 제공량(250mL) 당 당류 27g 표시.</p>
+        </div>
+
+        <p><strong>이 보고서를 바탕으로 민지가 섭취한 실제 당류(g), 각설탕 개수, WHO 권장량(25g) 대비 %를 올바르게 연결한 것은?</strong></p>
+        
+        <label class="choice-label"><input type="radio" name="s2q1" value="A"> <span>27g / 7개 / 108%</span></label>
+        <label class="choice-label"><input type="radio" name="s2q1" value="B"> <span>54g / 13.5개 / 216%</span></label>
+        <label class="choice-label"><input type="radio" name="s2q1" value="C"> <span>54g / 10개 / 200%</span></label>
+        <label class="choice-label"><input type="radio" name="s2q1" value="D"> <span>108g / 26개 / 432%</span></label>
+
+        <div class="hint-tab" onclick="toggleHint('h8')">🔍 수사 힌트 확인하기</div>
+        <div id="h8" class="hint-content">공식: 실제 당류 = 27 × (500 ÷ 250). 각설탕 = 실제당류 ÷ 4.</div>
+        <button class="action-btn" onclick="checkAnswers('page-10', {s2q1:'B'})">보고서 완성</button>
+      </div>
+    </div>
+
+    <div id="page-11" class="page">
+      <div class="left-pane"><img src="images/hRpn5VG.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q9] 수사 기록 2호: 대원 준호의 과자</h2>
+        
+        <div class="investigation-report">
+          <div class="report-stamp">CONFIDENTIAL</div>
+          <p><strong>[관찰 기록]</strong> 준호 대원은 과자 한 봉지(90g)를 다 먹고 "당류 8g이네!"라며 안심함.</p>
+          <p><strong>[단서 확보]</strong> 과자 성분표: 1회 제공량(30g) 당 당류 8g 표시.</p>
+        </div>
+
+        <div class="sub-q">
+          <h4>① 준호가 실제로 섭취한 당류(g)와 각설탕 개수는?</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s2q2_a" value="A" style="transform:scale(1.5); margin-right:10px;"> 8g (2개)</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s2q2_a" value="B" style="transform:scale(1.5); margin-right:10px;"> 24g (6개)</label>
+        </div>
+        <div class="sub-q">
+          <h4>② 준호의 생각은 무엇이 잘못되었는가?</h4>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s2q2_b" value="A"> <span>1회 제공량 기준(30g)과 실제 섭취량(90g)이 다름을 인지하지 못했다.</span></label>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s2q2_b" value="B"> <span>과자에 들어있는 당은 자연당이므로 계산할 필요가 없다.</span></label>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h9')">🔍 수사 힌트 확인하기</div>
+        <div id="h9" class="hint-content">준호는 1회 제공량(30g)의 3배인 90g을 먹었다는 사실!</div>
+        <button class="action-btn" onclick="checkAnswers('page-11', {s2q2_a:'B', s2q2_b:'A'})">준호 심문 완료</button>
+      </div>
+    </div>
+
+    <div id="page-12" class="page">
+      <div class="left-pane"><img src="images/pz5TY1m.png" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q10] 수사 기록 3호: 대원 소이의 커피음료</h2>
+        
+        <div class="investigation-report">
+          <div class="report-stamp">CONFIDENTIAL</div>
+          <p><strong>[관찰 기록]</strong> 소이 대원은 300mL짜리 캔커피 하나를 모두 마심.</p>
+          <p><strong>[단서 확보]</strong> 커피 성분표: 1회 제공량(200mL) 당 당류 18g 표시.</p>
+        </div>
+
+        <div class="sub-q">
+          <h4>① 이 커피의 실제 섭취 당류(g)는?</h4>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s2q3_a" value="A" style="transform:scale(1.5); margin-right:10px;"> 18g</label>
+          <label style="display:inline-block; margin-right:20px; font-size:18px;"><input type="radio" name="s2q3_a" value="B" style="transform:scale(1.5); margin-right:10px;"> 27g</label>
+          <label style="display:inline-block; font-size:18px;"><input type="radio" name="s2q3_a" value="C" style="transform:scale(1.5); margin-right:10px;"> 36g</label>
+        </div>
+        <div class="sub-q">
+          <h4>② [최종 암호 단서] 세 명의 대원(민지, 준호, 소이)이 범행 현장에서 섭취한 당류의 총합(g)은?</h4>
+          <input type="number" id="s2q3_total" placeholder="숫자만 입력 (이 숫자를 꼭 기억하세요!)">
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h10')">🔍 수사 힌트 확인하기</div>
+        <div id="h10" class="hint-content">커피: 18 × (300 ÷ 200) = 27g. 총합 = Q8정답(54) + Q9정답(24) + 커피당류(27)</div>
+        <button class="action-btn" onclick="checkS2Q3('page-12')">증거 종합</button>
+      </div>
+    </div>
+
+    <div id="page-13" class="page">
+      <div class="left-pane">
+        <img src="images/1MSCx7Y.jpeg" class="question-img">
+        <h3 style="color:#ffcc00; font-size: 24px;">STAGE 3<br>용의자 심문 및 실생활 판단</h3>
+      </div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q11] 용의자 A의 알리바이 검증</h2>
+        <p>"딸기 1팩(7g), 콜라 1컵(11g), 아이스크림 1스쿱(22g)만 먹었으니 아무 문제없어요!"</p>
+        
+        <div class="sub-q" style="border-left-color: #0f0;">
+          <h4>① 용의자 A가 섭취한 당류의 총합(g)을 숫자로 입력하시오.</h4>
+          <input type="number" id="s3q1_total" placeholder="숫자만 정확히 입력">
+        </div>
+
+        <div class="sub-q">
+          <h4>② 위 계산 결과를 바탕으로, 이 진술에 대한 올바른 판단을 고르시오.</h4>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s3q1_b" value="A"> <span>사실이다. 총합이 한국인 제한 기준(100g)에 한참 못 미친다.</span></label>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s3q1_b" value="B"> <span>거짓이다. 총합이 WHO 권장량(25g)을 160% 초과하여 건강상 문제(충치 등)가 발생할 수 있다.</span></label>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h11')">🔍 수사 힌트 확인하기</div>
+        <div id="h11" class="hint-content">7 + 11 + 22 = ? 계산 후 WHO 기준(25g)과 비교해보자.</div>
+        <button class="action-btn" onclick="checkS3Q1('page-13')">심문 기록</button>
+      </div>
+    </div>
+
+    <div id="page-14" class="page">
+      <div class="left-pane"><img src="images/x6TcDqb.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q12] 용의자 B의 알리바이 검증</h2>
+        <p>"당류 섭취 제한은 첨가당에만 해당해요. 과일 속 자연당은 얼마든지 먹어도 기준 초과가 아니에요."</p>
+        
+        <div class="sub-q">
+          <h4>이 진술이 맞는지 교재(p.57) 근거로 검증한 내용 중 올바른 것은?</h4>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s3q2" value="A"> <span>맞다. 자연당은 아무리 먹어도 제한 기준에 포함되지 않는다.</span></label>
+          <label class="choice-label" style="background:#222;"><input type="radio" name="s3q2" value="B"> <span>절반만 맞다. 한국 기준은 첨가당을 제한하지만, WHO 기준은 자연당을 포함한 '유리당' 전체를 제한하므로 자연당도 포함된다.</span></label>
+        </div>
+
+        <div class="hint-tab" onclick="toggleHint('h12')">🔍 수사 힌트 확인하기</div>
+        <div id="h12" class="hint-content">WHO는 자연당도 포함된 '유리당' 10% 미만을 권고한다.</div>
+        <button class="action-btn" onclick="checkAnswers('page-14', {s3q2:'B'})">진술 검증</button>
+      </div>
+    </div>
+
+    <div id="page-15" class="page">
+      <div class="left-pane"><img src="images/g8MC7Lg.jpeg" class="question-img"></div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">[Q13] 용의자 C의 마트 행동 분석</h2>
+        <p>케첩 A(당류 24g)와 1/2 케첩 B(당류 17g) 중 그냥 싼 A를 샀다는 용의자 C. (차이 7g)<br><strong>마트에서 식품 구매 시 당류를 줄이는 올바른 방법 2가지를 고르시오.</strong></p>
+        
+        <label class="choice-label"><input type="checkbox" id="s3q3_1"> ① 영양성분표에서 당류 함량을 비교해 낮은 것을 선택한다.</label>
+        <label class="choice-label"><input type="checkbox" id="s3q3_2"> ② 무조건 가격이 가장 저렴한 제품을 고른다.</label>
+        <label class="choice-label"><input type="checkbox" id="s3q3_3"> ③ 토마토페이스트 같이 당류가 낮은 자연 식재료를 선택한다.</label>
+        <label class="choice-label"><input type="checkbox" id="s3q3_4"> ④ 포장지가 예쁜 가공식품 위주로 구매한다.</label>
+
+        <div class="hint-tab" onclick="toggleHint('h13')">🔍 수사 힌트 확인하기</div>
+        <div id="h13" class="hint-content">p.60 내용 참고. 성분표 비교와 자연 식재료 선택이 핵심!</div>
+        <button class="action-btn" onclick="checkMultiCheckbox('page-15', ['s3q3_1', 's3q3_3'], ['s3q3_2', 's3q3_4'], '최종 관문으로!')">최종 분석 완료</button>
+      </div>
+    </div>
+
+    <div id="page-16" class="page">
+      <div class="left-pane"><img src="images/rwK11tF.jpeg" class="question-img"></div>
+      <div class="right-pane vault-wrapper">
+        <h2 style="color:#ffcc00; font-size:36px; margin-top:0;">[최종 관문] 수사관이 갇힌 비밀 밀실</h2>
+        <p style="font-size: 22px; text-align:center;">앞서 [Q10]에서 계산한 <strong>세 명의 대원이 섭취한 당류의 총합(g) 숫자</strong>가 밀실 전자 도어락의 비밀번호다!</p>
+        
+        <div id="password-display">___</div>
+        <div class="keypad">
+          <div class="key" onclick="pressKey(1)">1</div>
+          <div class="key" onclick="pressKey(2)">2</div>
+          <div class="key" onclick="pressKey(3)">3</div>
+          <div class="key" onclick="pressKey(4)">4</div>
+          <div class="key" onclick="pressKey(5)">5</div>
+          <div class="key" onclick="pressKey(6)">6</div>
+          <div class="key" onclick="pressKey(7)">7</div>
+          <div class="key" onclick="pressKey(8)">8</div>
+          <div class="key" onclick="pressKey(9)">9</div>
+          <div class="key action" onclick="pressKey('C')">C</div>
+          <div class="key" onclick="pressKey(0)">0</div>
+          <div class="key action" onclick="checkVault()" style="background: linear-gradient(#28a745, #1e7e34); box-shadow: 0 8px 0 #155724;">E</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-17" class="page">
+      <div class="left-pane" style="background:#1a1a1a;">
+        <img src="images/O6FsYXT.jpeg" class="question-img" style="border: 4px solid #ffcc00;">
+        <h2 style="color:#ffcc00;">수사관 구출 성공!</h2>
+      </div>
+      <div class="right-pane">
+        <div class="newspaper">
+          <h1>[특보] 실종 수사관 극적 구조, 사건의 전말은?</h1>
+          <p>굳게 잠겨있던 밀실의 문이 열리자, 안에는 실종되었던 식품안전나라 수석 수사관이 무사히 발견되었다! 수사관은 숨을 돌리며 충격적인 진실을 털어놓았다.</p>
+          <p><strong>"나를 가둔 범인은 바로... 우리 일상 곳곳에 숨어있던 '당류 과잉 섭취의 유혹'이었습니다. 여러분이 1회 제공량의 함정을 밝혀내고 영양성분표를 해독해준 덕분에 이 환상에서 빠져나올 수 있었습니다!"</strong></p>
+          <p>탐정 수사대원들의 눈부신 활약으로 당류의 진실이 세상에 밝혀지며 사건은 완벽하게 종결되었다.</p>
+          <button class="action-btn" onclick="showFinalPage()">최종 보고서 작성하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-18" class="page">
+      <div class="left-pane" style="background:#111; text-align:center;">
+        <h1 style="font-family:'Orbitron', sans-serif; color:#0f0; font-size:60px; margin-bottom:15px; text-shadow:0 0 25px #0f0;">MISSION<br>SUCCESS</h1>
+        <img src="images/WJzjFN4.png" class="question-img" style="border: 4px solid #0f0; filter: grayscale(80%);">
+        <p style="font-size:24px; color:#0f0; font-weight:bold;">사건 종결! 방탈출이 완료되었습니다.</p>
+      </div>
+      <div class="right-pane">
+        <h2 style="color:var(--accent);">수사 일지 최종 제출</h2>
+        <p style="font-size:18px;">함께 활동한 조원들의 이름과 오늘 활동을 마친 소감을 각각 작성해주세요.</p>
+        
+        <h4 style="margin-bottom: 5px; color:#ddd;">👥 함께 활동한 조원 이름</h4>
+        <input type="text" id="memberNames" placeholder="예: 홍길동, 김철수, 변우석">
+        
+        <h4 style="margin-bottom: 5px; color:#ddd;">✍️ 활동 소감문</h4>
+        <textarea id="reflection" placeholder="오늘 방탈출 활동에서 느낀 점, 새롭게 알게 된 점 등을 10자 이상 정성껏 작성해주세요."></textarea>
+        
+        <button class="action-btn" id="submitBtn" onclick="submitResult()">수사 일지 서버로 전송</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentInput = "";
+    
+    function startIntro() {
+      document.getElementById('start-overlay').style.display = 'none';
+      const video = document.getElementById('intro-video');
+      const skipBtn = document.getElementById('skip-btn');
+      skipBtn.style.display = 'block';
+      
+      video.play().catch(e => {
+        console.error("Video play error:", e);
+        skipIntro();
+      });
+
+      video.onended = () => {
+        skipIntro();
+      };
+    }
+
+    function skipIntro() {
+      const video = document.getElementById('intro-video');
+      video.pause();
+      const introScreen = document.getElementById('intro-screen');
+      introScreen.style.opacity = '0';
+      setTimeout(() => {
+        introScreen.style.display = 'none';
+      }, 1000);
+    }
+
+    function playSound(id) { 
+      let audio = document.getElementById(id);
+      audio.currentTime = 0;
+      audio.play().catch(e => {}); 
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id);
+      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function goNext(currentPage, nextPageMsg = null) {
+      if(currentPage === 1) {
+        if(!document.getElementById('pledge').checked) { alert("수사대원 서약서에 체크해주세요."); return; }
+        if(!document.getElementById('teamName').value.trim()) { alert("조 이름을 입력해주세요."); return; }
+      }
+      playSound('snd-correct');
+      if(nextPageMsg) {
+        showStageTransition(nextPageMsg, 'page-' + (currentPage + 1));
+      } else {
+        document.getElementById('page-' + currentPage).classList.remove('active');
+        document.getElementById('page-' + (currentPage + 1)).classList.add('active');
+      }
+    }
+
+    function startEscape() {
+      if(!document.getElementById('studentId').value || !document.getElementById('studentName').value.trim()) {
+        alert("학번과 이름을 모두 입력해야 합니다."); return;
+      }
+      
+      playSound('snd-keypad'); 
+      
+      const loadingUi = document.getElementById('loading-ui');
+      const accessText = document.getElementById('access-text');
+      const accessGranted = document.getElementById('access-granted');
+      
+      // 초기화
+      accessText.style.display = 'block';
+      accessText.innerText = "수사망 접근 요청 중...";
+      accessGranted.classList.remove('stamp');
+      document.getElementById('scan-box').style.opacity = '1';
+      
+      loadingUi.classList.add('show'); 
+
+      setTimeout(() => { accessText.innerText = "대원 신원 확인 중..."; }, 1000);
+      setTimeout(() => { accessText.innerText = "현장 폴리스 라인 해제 중..."; }, 2000);
+      
+      setTimeout(() => { 
+        accessText.style.display = 'none';
+        document.getElementById('scan-box').style.opacity = '0.3';
+        accessGranted.classList.add('stamp'); 
+        playSound('snd-door'); // 묵직한 효과음
+      }, 3000);
+
+      setTimeout(() => {
+        loadingUi.classList.remove('show');
+        document.getElementById('page-2').classList.remove('active');
+        document.getElementById('page-3').classList.add('active');
+        playSound('snd-correct');
+      }, 4500);
+    }
+
+    function showStageTransition(msg, nextPageId) {
+      const ui = document.getElementById('stage-ui');
+      document.getElementById('stage-msg').innerText = msg;
+      ui.classList.add('show');
+      setTimeout(() => {
+        ui.classList.remove('show');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(nextPageId).classList.add('active');
+      }, 1500);
+    }
+
+    function checkAnswers(pageId, answersObj, nextStageMsg = null) {
+      let isCorrect = true;
+      for(let key in answersObj) {
+        let selected = document.querySelector(`input[name="${key}"]:checked`);
+        if(!selected || selected.value !== answersObj[key]) isCorrect = false;
+      }
+      processResult(isCorrect, pageId, nextStageMsg);
+    }
+
+    function checkSelects(pageId, answersObj) {
+      let isCorrect = true;
+      for(let key in answersObj) {
+        if(document.getElementById(key).value !== answersObj[key]) isCorrect = false;
+      }
+      processResult(isCorrect, pageId);
+    }
+
+    function checkMultiCheckbox(pageId, correctIds, wrongIds, nextStageMsg = null) {
+      let isCorrect = true;
+      correctIds.forEach(id => { if(!document.getElementById(id).checked) isCorrect = false; });
+      wrongIds.forEach(id => { if(document.getElementById(id).checked) isCorrect = false; });
+      processResult(isCorrect, pageId, nextStageMsg);
+    }
+
+    function checkS2Q3(pageId) {
+      let rdo = document.querySelector('input[name="s2q3_a"]:checked');
+      let total = document.getElementById('s2q3_total').value;
+      if(rdo && rdo.value === 'B' && total === '105') {
+        processResult(true, pageId, "STAGE 3 진입!");
+      } else {
+        processResult(false, pageId);
+      }
+    }
+
+    function checkS3Q1(pageId) {
+      let total = document.getElementById('s3q1_total').value; 
+      let rdo = document.querySelector('input[name="s3q1_b"]:checked'); 
+      
+      if(total === '40' && rdo && rdo.value === 'B') {
+        processResult(true, pageId);
+      } else {
+        processResult(false, pageId);
+      }
+    }
+
+    // 💡 정답/오답 처리 및 오답 시 힌트 노출
+    function processResult(isCorrect, pageId, nextStageMsg = null) {
+      if(isCorrect) {
+        playSound('snd-correct');
+        let nextNum = parseInt(pageId.split('-')[1]) + 1;
+        if(nextStageMsg) {
+          showStageTransition(nextStageMsg, 'page-' + nextNum);
+        } else {
+          document.getElementById(pageId).classList.remove('active');
+          document.getElementById('page-' + nextNum).classList.add('active');
+        }
+      } else {
+        playSound('snd-wrong');
+        alert("분석이 틀렸습니다. 수사 파일과 단서를 다시 확인하세요!");
+        
+        let hintTab = document.querySelector('#' + pageId + ' .hint-tab');
+        if(hintTab) {
+          hintTab.style.display = 'block';
+        }
+      }
+    }
+
+    function pressKey(val) {
+      playSound('snd-keypad');
+      if(val === 'C') { currentInput = ""; }
+      else if(currentInput.length < 3) { currentInput += val; }
+      
+      let display = currentInput;
+      while(display.length < 3) display += "_";
+      document.getElementById('password-display').innerText = display;
+    }
+
+    function checkVault() {
+      if(currentInput === "105") {
+        playSound('snd-door');
+        document.getElementById('main-container').classList.add('door-open'); 
+        
+        if('speechSynthesis' in window) {
+          let msg = new SpeechSynthesisUtterance("임무 성공.");
+          msg.rate = 0.9; msg.pitch = 0.6;
+          window.speechSynthesis.speak(msg);
+        }
+
+        setTimeout(() => {
+          document.getElementById('success-flash').style.display = 'block';
+          playSound('snd-success');
+          
+          setTimeout(() => {
+            document.getElementById('success-flash').style.display = 'none';
+            document.getElementById('main-container').classList.remove('door-open');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-17').classList.add('active'); 
+          }, 2000);
+        }, 1500);
+      } else {
+        playSound('snd-wrong');
+        alert("비밀번호가 틀렸습니다! 세 대원이 섭취한 당류의 총합(g)을 정확히 떠올려보세요.");
+        currentInput = "";
+        document.getElementById('password-display').innerText = "___";
+      }
+    }
+
+    function showFinalPage() {
+      document.getElementById('page-17').classList.remove('active');
+      document.getElementById('page-18').classList.add('active');
+    }
+
+    function submitResult() {
+      let memberNames = document.getElementById('memberNames').value.trim();
+      let reflection = document.getElementById('reflection').value.trim();
+      
+      if(!memberNames) { alert("함께 활동한 조원들의 이름을 적어주세요!"); return; }
+      if(reflection.length < 10) { alert("소감문을 10자 이상 정성껏 작성해주세요!"); return; }
+      
+      document.getElementById('submitBtn').innerText = "서버로 전송 중...";
+      document.getElementById('submitBtn').disabled = true;
+
+      var data = {
+        teamName: document.getElementById('teamName').value,
+        studentId: document.getElementById('studentId').value,
+        studentName: document.getElementById('studentName').value,
+        memberNames: memberNames,
+        reflection: reflection
+      };
+
+      if (window.submitResultToFirebase) {
+        window.submitResultToFirebase(data, function() {
+          const page18 = document.getElementById('page-18');
+          page18.style.display = 'block';
+          
+          page18.innerHTML = `
+            <div class="grand-finale-overlay" id="grand-finale" style="display: flex;">
+              <div class="matrix-bg"></div>
+              <div class="warning-text">SYSTEM OVERRIDE</div>
+              <div class="decrypting-text">데이터베이스 정보 갱신 중...</div>
+              
+              <div class="id-card-container" id="id-card">
+                <div class="id-header">당류 탐정 수사대 특수 요원</div>
+                <div class="id-body">
+                  <div class="id-photo">🕵️‍♂️</div>
+                  <div class="id-info">
+                    <span>NAME</span>
+                    <p>${data.studentName}</p>
+                    <span>TEAM</span>
+                    <p>${data.teamName}</p>
+                    <span>ID NO</span>
+                    <p>${data.studentId}</p>
+                  </div>
+                </div>
+                <div class="stamp-overlay" id="mission-stamp">MISSION ACCOMPLISHED</div>
+              </div>
+              
+              <div class="congratulations-msg" id="congrats-msg">
+                모든 수사가 끝났습니다.<br>화면을 촬영하여 요원 임명장을 보관하세요!
+              </div>
+            </div>
+          `;
+          
+          // Animation sequence
+          setTimeout(() => {
+            document.querySelector('.warning-text').innerText = "DECRYPT COMPLETE";
+            document.querySelector('.warning-text').style.color = "#00ffcc";
+            document.querySelector('.warning-text').style.textShadow = "0 0 30px #00ffcc";
+            document.querySelector('.warning-text').style.animation = "none";
+            document.querySelector('.decrypting-text').innerText = "요원 신원 확인 완료.";
+            
+            setTimeout(() => {
+              document.getElementById('id-card').classList.add('reveal');
+              if(document.getElementById('snd-success')) {
+                document.getElementById('snd-success').currentTime = 0;
+                document.getElementById('snd-success').play().catch(e=>console.log(e));
+              }
+              
+              setTimeout(() => {
+                document.getElementById('mission-stamp').classList.add('stamp-it');
+                if(document.getElementById('snd-door')) {
+                  document.getElementById('snd-door').currentTime = 0;
+                  document.getElementById('snd-door').play().catch(e=>console.log(e));
+                }
+                
+                setTimeout(() => {
+                  document.getElementById('congrats-msg').style.opacity = '1';
+                }, 1000);
+              }, 1200);
+            }, 1000);
+          }, 2500);
+
+        }, function(error) {
+          alert("오류 발생: " + error.message);
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('submitBtn').innerText = "다시 전송하기";
+        });
+      } else {
+        alert("Firebase가 초기화되지 않았습니다.");
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerText = "다시 전송하기";
+      }
+    }
+  </script>
+  
+  <!-- Firebase Integration -->
+  <script type="module">
+    import { db, collection, addDoc, serverTimestamp } from './firebase-config.js';
+    
+    window.submitResultToFirebase = async function(data, onSuccess, onError) {
+      try {
+        await addDoc(collection(db, "investigations"), {
+          ...data,
+          timestamp: serverTimestamp()
+        });
+        onSuccess();
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        onError(e);
+      }
+    };
+  </script>
+</body>
+</html>
