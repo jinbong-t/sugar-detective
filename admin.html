@@ -282,6 +282,13 @@
     <div class="table-container">
       <div class="table-header">
         <h2><div class="pulse"></div> 실시간 수사 보고 현황</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <select id="class-filter" style="padding: 8px; border-radius: 5px; background: rgba(0,255,204,0.1); color: #00ffcc; border: 1px solid #00ffcc;">
+            <option value="">모든 반 보기</option>
+          </select>
+          <button id="btn-export" style="padding: 8px 15px; border-radius: 5px; background: rgba(255,255,255,0.1); color: white; border: 1px solid white; cursor: pointer;">엑셀 저장</button>
+          <button id="btn-reset" style="padding: 8px 15px; border-radius: 5px; background: rgba(255,51,102,0.1); color: #ff3366; border: 1px solid #ff3366; cursor: pointer;">초기화</button>
+        </div>
       </div>
       <table>
         <thead>
@@ -290,7 +297,7 @@
             <th>제출자 정보</th>
             <th>참여 대원</th>
             <th>최종 소감 및 보고</th>
-            <th>보고 시간</th>
+            <th>활동 시간</th>
           </tr>
         </thead>
         <tbody id="table-body">
@@ -301,12 +308,18 @@
   </div>
 
   <script type="module">
-    import { db, collection, onSnapshot, query, orderBy } from './firebase-config.js';
+    import { db, collection, onSnapshot, query, orderBy, getDocs, deleteDoc, doc } from './firebase-config.js';
 
     const tableBody = document.getElementById('table-body');
     const totalTeamsEl = document.getElementById('total-teams');
     const latestTimeEl = document.getElementById('latest-time');
     const loadingEl = document.getElementById('loading');
+    const classFilter = document.getElementById('class-filter');
+    const btnExport = document.getElementById('btn-export');
+    const btnReset = document.getElementById('btn-reset');
+
+    let allData = [];
+    let classList = new Set();
 
     // 실시간 데이터 리스너 설정
     const q = query(collection(db, "investigations"), orderBy("timestamp", "desc"));
@@ -315,22 +328,78 @@
       loadingEl.style.opacity = '0';
       setTimeout(() => loadingEl.style.display = 'none', 500);
 
+      allData = [];
+      let tempClassList = new Set();
+
+      snapshot.forEach((docSnapshot) => {
+        const data = docSnapshot.data();
+        data.id = docSnapshot.id;
+        
+        if (data.studentId && data.studentId.length >= 2) {
+          let classStr = data.studentId.substring(0, 2) + "반";
+          data.classStr = classStr;
+          tempClassList.add(classStr);
+        } else {
+          data.classStr = "미분류";
+        }
+
+        allData.push(data);
+      });
+
+      updateClassFilterOptions(tempClassList);
+      renderTable();
+
+    }, (error) => {
+      console.error("Error fetching data: ", error);
+      alert("데이터를 불러오는 중 오류가 발생했습니다. Firebase 설정을 확인해주세요.");
+      loadingEl.style.display = 'none';
+    });
+
+    function updateClassFilterOptions(newClassSet) {
+      const currentSelected = classFilter.value;
+      let sortedClasses = Array.from(newClassSet).sort();
+      
+      classFilter.innerHTML = '<option value="">모든 반 보기</option>';
+      sortedClasses.forEach(cls => {
+        let opt = document.createElement('option');
+        opt.value = cls;
+        opt.innerText = cls;
+        classFilter.appendChild(opt);
+      });
+
+      if (newClassSet.has(currentSelected)) {
+        classFilter.value = currentSelected;
+      }
+    }
+
+    function renderTable() {
       tableBody.innerHTML = '';
-      totalTeamsEl.innerText = snapshot.size;
+      let filteredData = allData;
+      
+      if (classFilter.value !== "") {
+        filteredData = allData.filter(d => d.classStr === classFilter.value);
+      }
 
+      totalTeamsEl.innerText = filteredData.length;
+      
       let isFirst = true;
-
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        let timeStr = "--:--:--";
-        if(data.timestamp) {
-          const date = data.timestamp.toDate();
-          timeStr = date.toLocaleTimeString('ko-KR', { hour12: false });
-          
-          if(isFirst) {
-            latestTimeEl.innerText = timeStr;
-            isFirst = false;
+      if(filteredData.length > 0) {
+          const firstData = filteredData[0];
+          if(firstData.timestamp) {
+              latestTimeEl.innerText = firstData.timestamp.toDate().toLocaleTimeString('ko-KR', { hour12: false });
+          } else {
+              latestTimeEl.innerText = "--:--:--";
           }
+      } else {
+          latestTimeEl.innerText = "--:--:--";
+      }
+
+      filteredData.forEach((data) => {
+        let timeStr = "기록 없음";
+        if(data.activityTime !== undefined) {
+          let m = Math.floor(data.activityTime / 60);
+          let s = data.activityTime % 60;
+          timeStr = `${m}분 ${s}초`;
         }
 
         const tr = document.createElement('tr');
@@ -349,13 +418,80 @@
         tableBody.appendChild(tr);
       });
       
-      if(snapshot.empty) {
+      if(filteredData.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">아직 접수된 수사 보고가 없습니다.</td></tr>`;
       }
-    }, (error) => {
-      console.error("Error fetching data: ", error);
-      alert("데이터를 불러오는 중 오류가 발생했습니다. Firebase 설정을 확인해주세요.");
-      loadingEl.style.display = 'none';
+    }
+
+    classFilter.addEventListener('change', renderTable);
+
+    // 초기화 기능
+    btnReset.addEventListener('click', async () => {
+      if(confirm("정말로 모든 수사 기록을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+        loadingEl.style.opacity = '1';
+        loadingEl.style.display = 'flex';
+        try {
+          const querySnapshot = await getDocs(collection(db, "investigations"));
+          const deletePromises = [];
+          querySnapshot.forEach((document) => {
+            deletePromises.push(deleteDoc(doc(db, "investigations", document.id)));
+          });
+          await Promise.all(deletePromises);
+          alert("초기화가 완료되었습니다.");
+        } catch (e) {
+          console.error("초기화 중 오류 발생: ", e);
+          alert("초기화 중 오류가 발생했습니다.");
+        }
+        loadingEl.style.opacity = '0';
+        setTimeout(() => loadingEl.style.display = 'none', 500);
+      }
+    });
+
+    // 엑셀(CSV) 내보내기 기능
+    btnExport.addEventListener('click', () => {
+      if(allData.length === 0) {
+        alert("내보낼 데이터가 없습니다.");
+        return;
+      }
+
+      let filteredData = allData;
+      if (classFilter.value !== "") {
+        filteredData = allData.filter(d => d.classStr === classFilter.value);
+      }
+
+      let csvContent = "\uFEFF팀/조,이름,학번,참여대원,소감문,활동시간(초),활동시간(분초),보고시간\n";
+      
+      filteredData.forEach(d => {
+        let team = '"' + (d.teamName || '').replace(/"/g, '""') + '"';
+        let name = '"' + (d.studentName || '').replace(/"/g, '""') + '"';
+        let id = '"' + (d.studentId || '').replace(/"/g, '""') + '"';
+        let members = '"' + (d.memberNames || '').replace(/"/g, '""') + '"';
+        let ref = '"' + (d.reflection || '').replace(/"/g, '""') + '"';
+        
+        let actSec = d.activityTime !== undefined ? d.activityTime : '';
+        let actStr = "";
+        if(d.activityTime !== undefined) {
+           actStr = `${Math.floor(d.activityTime / 60)}분 ${d.activityTime % 60}초`;
+        }
+        let actFmt = '"' + actStr + '"';
+        
+        let timeStr = "";
+        if(d.timestamp) {
+           timeStr = '"' + d.timestamp.toDate().toLocaleString('ko-KR') + '"';
+        }
+
+        csvContent += `${team},${name},${id},${members},${ref},${actSec},${actFmt},${timeStr}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `당류탐정수사대_기록_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   </script>
 </body>
