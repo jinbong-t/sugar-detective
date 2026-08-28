@@ -200,7 +200,7 @@
     .decrypting-text { font-size: 24px; margin-bottom: 40px; letter-spacing: 2px; }
     
     .id-card-container {
-      position: relative; width: 500px; height: 300px;
+      position: relative; width: 500px; height: auto; min-height: 300px; padding-bottom: 20px;
       background: linear-gradient(135deg, #111, #222);
       border: 3px solid #00ffcc; border-radius: 15px;
       box-shadow: 0 0 50px rgba(0,255,204,0.4);
@@ -1010,6 +1010,11 @@
                     <p>${data.teamName}</p>
                     <span>ID NO</span>
                     <p>${data.studentId}</p>
+                    <div style="margin-top:15px; font-size:14px; color:#ffcc00; line-height:1.5; border-top:1px dashed #555; padding-top:10px; font-style:italic;">
+                      "식품 속에 숨겨진 당류의 유혹을 밝혀내고<br>
+                      건강을 지켜낸 탁월한 수사 능력을 인정하여<br>
+                      이 임명장을 수여합니다."
+                    </div>
                   </div>
                 </div>
                 <div class="stamp-overlay" id="mission-stamp">MISSION ACCOMPLISHED</div>
