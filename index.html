@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -1028,6 +1028,13 @@
     
     window.submitResultToFirebase = async function(data, onSuccess, onError) {
       try {
+        // 파이어베이스 설정이 안 되어있을 경우 임시로 성공 처리해서 엔딩 보여주기
+        if (db.app.options.apiKey === "YOUR_API_KEY") {
+          console.warn("파이어베이스가 설정되지 않았습니다. 임시로 엔딩 화면을 보여줍니다.");
+          setTimeout(onSuccess, 1500);
+          return;
+        }
+        
         await addDoc(collection(db, "investigations"), {
           ...data,
           timestamp: serverTimestamp()
@@ -1035,7 +1042,8 @@
         onSuccess();
       } catch (e) {
         console.error("Error adding document: ", e);
-        onError(e);
+        // 에러가 나도 일단 학생들에게 엔딩은 보여주기 위해 onSuccess 실행
+        onSuccess();
       }
     };
   </script>
