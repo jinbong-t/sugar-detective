@@ -5,12 +5,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDbAibrDCBF-FlsGgCVRGyXlEoAcFgW01c",
+  authDomain: "sugar-detective.firebaseapp.com",
+  projectId: "sugar-detective",
+  storageBucket: "sugar-detective.firebasestorage.app",
+  messagingSenderId: "1009993457860",
+  appId: "1:1009993457860:web:01948589c37a3f9e95a991",
+  measurementId: "G-W45GXWXPX3"
 };
 
 // Initialize Firebase
