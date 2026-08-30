@@ -164,7 +164,7 @@
 
     th {
       text-align: left;
-      padding: 15px;
+      padding: 10px 12px;
       color: var(--text-muted);
       font-weight: 500;
       border-bottom: 1px solid var(--glass-border);
@@ -172,7 +172,7 @@
     }
 
     td {
-      padding: 15px;
+      padding: 10px 12px;
       border-bottom: 1px solid rgba(255,255,255,0.05);
       color: #cbd5e1;
       vertical-align: top;
@@ -449,23 +449,25 @@
           <td><div style="max-width: 150px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
           <td><div class="reflection-text" style="max-width: 250px;">${data.reflection || '-'}</div></td>
           <td>
-            <div style="margin-bottom: 5px;">
-              <span style="font-size: 11px; color:#94a3b8;">협업능력:</span><br>
-              <select class="eval-select collab-eval" data-id="${data.id}">
-                <option value="">평가 안함</option>
-                <option value="상" ${data.collabEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
-                <option value="중" ${data.collabEval === '중' ? 'selected' : ''}>중 (보통)</option>
-                <option value="하" ${data.collabEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
-              </select>
-            </div>
-            <div>
-              <span style="font-size: 11px; color:#94a3b8;">문제해결력:</span><br>
-              <select class="eval-select prob-eval" data-id="${data.id}">
-                <option value="">평가 안함</option>
-                <option value="상" ${data.probEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
-                <option value="중" ${data.probEval === '중' ? 'selected' : ''}>중 (보통)</option>
-                <option value="하" ${data.probEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
-              </select>
+            <div style="display: flex; gap: 10px;">
+              <div style="flex: 1;">
+                <span style="font-size: 11px; color:#94a3b8;">협업능력:</span><br>
+                <select class="eval-select collab-eval" data-id="${data.id}">
+                  <option value="">평가 안함</option>
+                  <option value="상" ${data.collabEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
+                  <option value="중" ${data.collabEval === '중' ? 'selected' : ''}>중 (보통)</option>
+                  <option value="하" ${data.collabEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
+                </select>
+              </div>
+              <div style="flex: 1;">
+                <span style="font-size: 11px; color:#94a3b8;">문제해결력:</span><br>
+                <select class="eval-select prob-eval" data-id="${data.id}">
+                  <option value="">평가 안함</option>
+                  <option value="상" ${data.probEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
+                  <option value="중" ${data.probEval === '중' ? 'selected' : ''}>중 (보통)</option>
+                  <option value="하" ${data.probEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
+                </select>
+              </div>
             </div>
           </td>
           <td><span class="time-badge">${timeStr}</span></td>
