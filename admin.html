@@ -248,6 +248,31 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .stage-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .stage-1 { background: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.5); }
+    .stage-2 { background: rgba(0, 255, 0, 0.2); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.5); }
+    .stage-3 { background: rgba(0, 153, 255, 0.2); color: #0099ff; border: 1px solid rgba(0, 153, 255, 0.5); }
+    .stage-clear { background: rgba(204, 0, 255, 0.2); color: #cc00ff; border: 1px solid rgba(204, 0, 255, 0.5); box-shadow: 0 0 10px rgba(204, 0, 255, 0.3); }
+
+    .eval-select {
+      background: #111;
+      color: #e2e8f0;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 4px;
+      margin-bottom: 5px;
+      width: 100%;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -295,8 +320,10 @@
           <tr>
             <th>팀/조</th>
             <th>제출자 정보</th>
+            <th>진행 상황</th>
             <th>참여 대원</th>
             <th>최종 소감 및 보고</th>
+            <th>과정중심평가 (자동저장)</th>
             <th>활동 시간</th>
           </tr>
         </thead>
@@ -308,7 +335,7 @@
   </div>
 
   <script type="module">
-    import { db, collection, onSnapshot, query, orderBy, getDocs, deleteDoc, doc } from './firebase-config.js';
+    import { db, collection, onSnapshot, query, orderBy, getDocs, deleteDoc, doc, updateDoc } from './firebase-config.js';
 
     const tableBody = document.getElementById('table-body');
     const totalTeamsEl = document.getElementById('total-teams');
@@ -396,11 +423,18 @@
 
       filteredData.forEach((data) => {
         let timeStr = "기록 없음";
-        if(data.activityTime !== undefined) {
+        if(data.activityTime !== undefined && data.status === 'CLEAR') {
           let m = Math.floor(data.activityTime / 60);
           let s = data.activityTime % 60;
           timeStr = `${m}분 ${s}초`;
         }
+
+        let stageClass = "stage-1";
+        if(data.status === "STAGE 2") stageClass = "stage-2";
+        else if(data.status === "STAGE 3") stageClass = "stage-3";
+        else if(data.status === "CLEAR") stageClass = "stage-clear";
+        
+        let displayStatus = data.status || "STAGE 1";
 
         const tr = document.createElement('tr');
         tr.style.animation = 'rowSlideIn 0.4s ease-out forwards';
@@ -411,15 +445,55 @@
             <div style="font-weight: bold; color: #fff;">${data.studentName || '이름 없음'}</div>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">학번: ${data.studentId || '-'}</div>
           </td>
-          <td><div style="max-width: 200px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
-          <td><div class="reflection-text">${data.reflection || '-'}</div></td>
+          <td><span class="stage-badge ${stageClass}">${displayStatus}</span></td>
+          <td><div style="max-width: 150px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
+          <td><div class="reflection-text" style="max-width: 250px;">${data.reflection || '-'}</div></td>
+          <td>
+            <div style="margin-bottom: 5px;">
+              <span style="font-size: 11px; color:#94a3b8;">협업능력:</span><br>
+              <select class="eval-select collab-eval" data-id="${data.id}">
+                <option value="">평가 안함</option>
+                <option value="상" ${data.collabEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
+                <option value="중" ${data.collabEval === '중' ? 'selected' : ''}>중 (보통)</option>
+                <option value="하" ${data.collabEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
+              </select>
+            </div>
+            <div>
+              <span style="font-size: 11px; color:#94a3b8;">문제해결력:</span><br>
+              <select class="eval-select prob-eval" data-id="${data.id}">
+                <option value="">평가 안함</option>
+                <option value="상" ${data.probEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
+                <option value="중" ${data.probEval === '중' ? 'selected' : ''}>중 (보통)</option>
+                <option value="하" ${data.probEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
+              </select>
+            </div>
+          </td>
           <td><span class="time-badge">${timeStr}</span></td>
         `;
         tableBody.appendChild(tr);
       });
       
+      // 평가 변경 이벤트 리스너 달기
+      document.querySelectorAll('.collab-eval').forEach(sel => {
+        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'collabEval', e.target.value));
+      });
+      document.querySelectorAll('.prob-eval').forEach(sel => {
+        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'probEval', e.target.value));
+      });
+      
       if(filteredData.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">아직 접수된 수사 보고가 없습니다.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">아직 접수된 수사 보고가 없습니다.</td></tr>`;
+      }
+    }
+
+    // 과정중심평가 업데이트 함수 (디바운스나 별도 피드백 없이 조용히 저장)
+    async function updateEval(docId, field, value) {
+      try {
+        await updateDoc(doc(db, "investigations", docId), {
+          [field]: value
+        });
+      } catch(e) {
+        console.error("평가 저장 오류: ", e);
       }
     }
 
@@ -459,18 +533,21 @@
         filteredData = allData.filter(d => d.classStr === classFilter.value);
       }
 
-      let csvContent = "\uFEFF팀/조,이름,학번,참여대원,소감문,활동시간(초),활동시간(분초),보고시간\n";
+      let csvContent = "\uFEFF팀/조,이름,학번,진행상황,참여대원,소감문,협업능력,문제해결력,활동시간(초),활동시간(분초),보고시간\n";
       
       filteredData.forEach(d => {
         let team = '"' + (d.teamName || '').replace(/"/g, '""') + '"';
         let name = '"' + (d.studentName || '').replace(/"/g, '""') + '"';
         let id = '"' + (d.studentId || '').replace(/"/g, '""') + '"';
+        let status = '"' + (d.status || 'STAGE 1') + '"';
         let members = '"' + (d.memberNames || '').replace(/"/g, '""') + '"';
         let ref = '"' + (d.reflection || '').replace(/"/g, '""') + '"';
+        let collab = '"' + (d.collabEval || '') + '"';
+        let prob = '"' + (d.probEval || '') + '"';
         
-        let actSec = d.activityTime !== undefined ? d.activityTime : '';
+        let actSec = (d.activityTime !== undefined && d.status === 'CLEAR') ? d.activityTime : '';
         let actStr = "";
-        if(d.activityTime !== undefined) {
+        if(d.activityTime !== undefined && d.status === 'CLEAR') {
            actStr = `${Math.floor(d.activityTime / 60)}분 ${d.activityTime % 60}초`;
         }
         let actFmt = '"' + actStr + '"';
@@ -480,7 +557,7 @@
            timeStr = '"' + d.timestamp.toDate().toLocaleString('ko-KR') + '"';
         }
 
-        csvContent += `${team},${name},${id},${members},${ref},${actSec},${actFmt},${timeStr}\n`;
+        csvContent += `${team},${name},${id},${status},${members},${ref},${collab},${prob},${actSec},${actFmt},${timeStr}\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

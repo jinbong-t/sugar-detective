@@ -820,6 +820,14 @@
       const accessText = document.getElementById('access-text');
       const accessGranted = document.getElementById('access-granted');
       
+      if (window.startInvestigationInFirebase) {
+        window.startInvestigationInFirebase({
+          teamName: document.getElementById('teamName').value,
+          studentId: document.getElementById('studentId').value,
+          studentName: document.getElementById('studentName').value
+        });
+      }
+      
       // 초기화
       accessText.style.display = 'block';
       accessText.innerText = "수사망 접근 요청 중...";
@@ -850,6 +858,13 @@
       const ui = document.getElementById('stage-ui');
       document.getElementById('stage-msg').innerText = msg;
       ui.classList.add('show');
+      
+      if (msg.includes('STAGE 2') && window.updateStageInFirebase) {
+        window.updateStageInFirebase('STAGE 2');
+      } else if (msg.includes('STAGE 3') && window.updateStageInFirebase) {
+        window.updateStageInFirebase('STAGE 3');
+      }
+      
       setTimeout(() => {
         ui.classList.remove('show');
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1076,25 +1091,65 @@
   
   <!-- Firebase Integration -->
   <script type="module">
-    import { db, collection, addDoc, serverTimestamp } from './firebase-config.js';
+    import { db, collection, addDoc, serverTimestamp, doc, setDoc, updateDoc } from './firebase-config.js';
     
+    window.startInvestigationInFirebase = async function(data) {
+      try {
+        if (db.app.options.apiKey === "YOUR_API_KEY") return;
+        const docId = data.studentId + "_" + Date.now();
+        localStorage.setItem('investigationDocId', docId);
+        
+        await setDoc(doc(db, "investigations", docId), {
+          ...data,
+          status: 'STAGE 1',
+          timestamp: serverTimestamp()
+        });
+      } catch(e) {
+        console.error("Error starting investigation: ", e);
+      }
+    };
+    
+    window.updateStageInFirebase = async function(stageName) {
+      try {
+        if (db.app.options.apiKey === "YOUR_API_KEY") return;
+        const docId = localStorage.getItem('investigationDocId');
+        if(!docId) return;
+        
+        await updateDoc(doc(db, "investigations", docId), {
+          status: stageName,
+          timestamp: serverTimestamp()
+        });
+      } catch(e) {
+        console.error("Error updating stage: ", e);
+      }
+    };
+
     window.submitResultToFirebase = async function(data, onSuccess, onError) {
       try {
-        // 파이어베이스 설정이 안 되어있을 경우 임시로 성공 처리해서 엔딩 보여주기
         if (db.app.options.apiKey === "YOUR_API_KEY") {
           console.warn("파이어베이스가 설정되지 않았습니다. 임시로 엔딩 화면을 보여줍니다.");
           setTimeout(onSuccess, 1500);
           return;
         }
         
-        await addDoc(collection(db, "investigations"), {
-          ...data,
-          timestamp: serverTimestamp()
-        });
+        const docId = localStorage.getItem('investigationDocId');
+        if (docId) {
+          await updateDoc(doc(db, "investigations", docId), {
+            ...data,
+            status: 'CLEAR',
+            timestamp: serverTimestamp()
+          });
+        } else {
+          // 혹시 docId가 없다면 새로 생성
+          await addDoc(collection(db, "investigations"), {
+            ...data,
+            status: 'CLEAR',
+            timestamp: serverTimestamp()
+          });
+        }
         onSuccess();
       } catch (e) {
-        console.error("Error adding document: ", e);
-        // 에러가 나도 일단 학생들에게 엔딩은 보여주기 위해 onSuccess 실행
+        console.error("Error updating document: ", e);
         onSuccess();
       }
     };
