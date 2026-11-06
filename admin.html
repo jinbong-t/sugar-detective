@@ -331,6 +331,79 @@
       width: 100%;
       font-size: 12px;
     }
+
+    .stage-summary-box {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+    }
+
+    .stage-stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border-left: 3px solid #555;
+      gap: 8px;
+    }
+    .stage-stat-row.s1 { border-left-color: #ffcc00; }
+    .stage-stat-row.s2 { border-left-color: #00ff00; }
+    .stage-stat-row.s3 { border-left-color: #0099ff; }
+
+    .q-map-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-top: 8px;
+      max-width: 240px;
+    }
+
+    .q-chip {
+      text-align: center;
+      padding: 3px 2px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.05);
+      color: #64748b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      cursor: help;
+    }
+    .q-chip.solving {
+      background: rgba(255, 204, 0, 0.2);
+      color: #ffcc00;
+      border-color: #ffcc00;
+      box-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
+    }
+    .q-chip.clear-perfect {
+      background: rgba(0, 255, 204, 0.18);
+      color: #00ffcc;
+      border-color: rgba(0, 255, 204, 0.5);
+    }
+    .q-chip.clear-retry {
+      background: rgba(255, 153, 0, 0.2);
+      color: #ffaa00;
+      border-color: rgba(255, 153, 0, 0.5);
+    }
+    .q-chip.clear-struggle {
+      background: rgba(255, 51, 102, 0.22);
+      color: #ff668c;
+      border-color: rgba(255, 51, 102, 0.5);
+    }
+
+    .eval-group-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--accent-main);
+      margin: 4px 0 3px 0;
+      padding-bottom: 2px;
+      border-bottom: 1px dashed rgba(0, 255, 204, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -378,10 +451,10 @@
           <tr>
             <th>팀/조</th>
             <th>제출자 정보</th>
-            <th>실시간 풀이 과정</th>
+            <th>문항별·스테이지별 풀이 과정</th>
             <th>참여 대원</th>
             <th>성찰 일지 (알게된 점 / 깨달은 점 / 실천할 점)</th>
-            <th>과정중심평가 (자동저장)</th>
+            <th>과정중심평가 (스테이지별 & 핵심역량)</th>
             <th>활동 시간</th>
             <th>관리</th>
           </tr>
@@ -497,10 +570,38 @@
         let wrongCnt = data.wrongCount !== undefined ? data.wrongCount : 0;
         let hintCnt = data.hintCount !== undefined ? data.hintCount : 0;
 
+        let sStats = data.stageStats || { s1: { wrong: 0, hint: 0 }, s2: { wrong: 0, hint: 0 }, s3: { wrong: 0, hint: 0 } };
+        let qStats = data.questionStats || {};
+
+        let qOrder = ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10','Q11','Q12','Q13','VAULT'];
+        let qChipsHtml = qOrder.map(qKey => {
+          let qs = qStats[qKey] || { status: (data.status === 'CLEAR' ? 'clear' : 'pending'), wrong: 0, hint: false };
+          let label = qKey === 'VAULT' ? '🔒' : qKey;
+          let chipClass = '';
+          let titleDesc = `${qKey === 'VAULT' ? '최종금고' : qKey}: 대기중`;
+          if (qs.status === 'solving') {
+            chipClass = 'solving';
+            titleDesc = `${qKey}: 현재 풀이중 (오답 ${qs.wrong || 0}회${qs.hint ? ', 힌트사용' : ''})`;
+          } else if (qs.status === 'clear' || data.status === 'CLEAR') {
+            if ((qs.wrong || 0) === 0 && !qs.hint) {
+              chipClass = 'clear-perfect';
+              titleDesc = `${qKey}: 한 번에 통과!`;
+            } else if ((qs.wrong || 0) >= 2) {
+              chipClass = 'clear-struggle';
+              titleDesc = `${qKey}: 통과 (오답 ${qs.wrong || 0}회${qs.hint ? ', 힌트사용' : ''})`;
+            } else {
+              chipClass = 'clear-retry';
+              titleDesc = `${qKey}: 통과 (오답 ${qs.wrong || 0}회${qs.hint ? ', 힌트사용' : ''})`;
+            }
+          }
+          let badgeMarker = (qs.wrong > 0) ? `(${qs.wrong})` : (qs.hint ? '*' : '');
+          return `<div class="q-chip ${chipClass}" title="${titleDesc}">${label}${badgeMarker}</div>`;
+        }).join('');
+
         let reflectionHtml = '';
         if (data.learnedPoint || data.realizedPoint || data.actionPlan) {
           reflectionHtml = `
-            <div style="min-width: 260px; max-width: 340px;">
+            <div style="min-width: 250px; max-width: 320px;">
               <div class="reflection-item learned">
                 <span class="reflection-label" style="color:#ffcc00;">💡 알게된 점</span>${data.learnedPoint || '-'}
               </div>
@@ -513,7 +614,7 @@
             </div>
           `;
         } else {
-          reflectionHtml = `<div class="reflection-text" style="max-width: 280px;">${data.reflection || '-'}</div>`;
+          reflectionHtml = `<div class="reflection-text" style="max-width: 260px;">${data.reflection || '-'}</div>`;
         }
 
         const tr = document.createElement('tr');
@@ -528,17 +629,64 @@
           <td>
             <span class="stage-badge ${stageClass}">${displayStatus}</span>
             <div class="process-stats">
-              <span class="stat-pill ${wrongCnt > 0 ? 'warn' : ''}">❌ 오답 ${wrongCnt}회</span>
-              <span class="stat-pill ${hintCnt > 0 ? 'hint' : ''}">🔍 힌트 ${hintCnt}회</span>
+              <span class="stat-pill ${wrongCnt > 0 ? 'warn' : ''}">총 오답 ${wrongCnt}회</span>
+              <span class="stat-pill ${hintCnt > 0 ? 'hint' : ''}">총 힌트 ${hintCnt}회</span>
+            </div>
+            <div class="stage-summary-box">
+              <div class="stage-stat-row s1">
+                <span style="color:#ffcc00; font-weight:bold;">S1 개념(Q1~7)</span>
+                <span>오답 ${sStats.s1?.wrong || 0} · 힌트 ${sStats.s1?.hint || 0}</span>
+              </div>
+              <div class="stage-stat-row s2">
+                <span style="color:#00ff00; font-weight:bold;">S2 계산(Q8~10)</span>
+                <span>오답 ${sStats.s2?.wrong || 0} · 힌트 ${sStats.s2?.hint || 0}</span>
+              </div>
+              <div class="stage-stat-row s3">
+                <span style="color:#0099ff; font-weight:bold;">S3 실생활(Q11~13)</span>
+                <span>오답 ${sStats.s3?.wrong || 0} · 힌트 ${sStats.s3?.hint || 0}</span>
+              </div>
+            </div>
+            <div class="q-map-grid" title="마우스를 올리면 문항별 상세 기록을 볼 수 있습니다 (초록: 단번에 정답 / 주황: 1회오답·힌트 / 빨강: 2회이상 오답)">
+              ${qChipsHtml}
             </div>
           </td>
-          <td><div style="max-width: 140px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
+          <td><div style="max-width: 130px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
           <td>${reflectionHtml}</td>
           <td>
-            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 155px;">
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 175px;">
+              <div class="eval-group-title">📊 스테이지별 성취도</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 11px; color:#ffcc00; white-space:nowrap;">S1 당류개념:</span>
+                <select class="eval-select eval-item-select" data-id="${data.id}" data-field="stage1Eval" style="margin-bottom:0; width: 95px;">
+                  <option value="">미평가</option>
+                  <option value="상" ${data.stage1Eval === '상' ? 'selected' : ''}>상 (우수)</option>
+                  <option value="중" ${data.stage1Eval === '중' ? 'selected' : ''}>중 (보통)</option>
+                  <option value="하" ${data.stage1Eval === '하' ? 'selected' : ''}>하 (노력)</option>
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 11px; color:#00ff00; white-space:nowrap;">S2 성분계산:</span>
+                <select class="eval-select eval-item-select" data-id="${data.id}" data-field="stage2Eval" style="margin-bottom:0; width: 95px;">
+                  <option value="">미평가</option>
+                  <option value="상" ${data.stage2Eval === '상' ? 'selected' : ''}>상 (우수)</option>
+                  <option value="중" ${data.stage2Eval === '중' ? 'selected' : ''}>중 (보통)</option>
+                  <option value="하" ${data.stage2Eval === '하' ? 'selected' : ''}>하 (노력)</option>
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 11px; color:#0099ff; white-space:nowrap;">S3 실생활적용:</span>
+                <select class="eval-select eval-item-select" data-id="${data.id}" data-field="stage3Eval" style="margin-bottom:0; width: 95px;">
+                  <option value="">미평가</option>
+                  <option value="상" ${data.stage3Eval === '상' ? 'selected' : ''}>상 (우수)</option>
+                  <option value="중" ${data.stage3Eval === '중' ? 'selected' : ''}>중 (보통)</option>
+                  <option value="하" ${data.stage3Eval === '하' ? 'selected' : ''}>하 (노력)</option>
+                </select>
+              </div>
+
+              <div class="eval-group-title" style="margin-top: 6px;">🌟 핵심 역량 평가</div>
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                 <span style="font-size: 11px; color:#94a3b8; white-space:nowrap;">협업능력:</span>
-                <select class="eval-select collab-eval" data-id="${data.id}" style="margin-bottom:0; width: 100px;">
+                <select class="eval-select eval-item-select" data-id="${data.id}" data-field="collabEval" style="margin-bottom:0; width: 95px;">
                   <option value="">미평가</option>
                   <option value="상" ${data.collabEval === '상' ? 'selected' : ''}>상 (우수)</option>
                   <option value="중" ${data.collabEval === '중' ? 'selected' : ''}>중 (보통)</option>
@@ -547,7 +695,7 @@
               </div>
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                 <span style="font-size: 11px; color:#94a3b8; white-space:nowrap;">문제해결:</span>
-                <select class="eval-select prob-eval" data-id="${data.id}" style="margin-bottom:0; width: 100px;">
+                <select class="eval-select eval-item-select" data-id="${data.id}" data-field="probEval" style="margin-bottom:0; width: 95px;">
                   <option value="">미평가</option>
                   <option value="상" ${data.probEval === '상' ? 'selected' : ''}>상 (우수)</option>
                   <option value="중" ${data.probEval === '중' ? 'selected' : ''}>중 (보통)</option>
@@ -556,7 +704,7 @@
               </div>
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                 <span style="font-size: 11px; color:#94a3b8; white-space:nowrap;">성찰·실천:</span>
-                <select class="eval-select reflect-eval" data-id="${data.id}" style="margin-bottom:0; width: 100px;">
+                <select class="eval-select eval-item-select" data-id="${data.id}" data-field="reflectEval" style="margin-bottom:0; width: 95px;">
                   <option value="">미평가</option>
                   <option value="상" ${data.reflectEval === '상' ? 'selected' : ''}>상 (우수)</option>
                   <option value="중" ${data.reflectEval === '중' ? 'selected' : ''}>중 (보통)</option>
@@ -574,14 +722,8 @@
       });
       
       // 평가 변경 이벤트 리스너 달기
-      document.querySelectorAll('.collab-eval').forEach(sel => {
-        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'collabEval', e.target.value));
-      });
-      document.querySelectorAll('.prob-eval').forEach(sel => {
-        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'probEval', e.target.value));
-      });
-      document.querySelectorAll('.reflect-eval').forEach(sel => {
-        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'reflectEval', e.target.value));
+      document.querySelectorAll('.eval-item-select').forEach(sel => {
+        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, e.target.dataset.field, e.target.value));
       });
       
       document.querySelectorAll('.btn-delete-row').forEach(btn => {
@@ -650,7 +792,7 @@
         filteredData = allData.filter(d => d.classStr === classFilter.value);
       }
 
-      let csvContent = "\uFEFF팀/조,이름,학번,진행상황,오답횟수,힌트사용횟수,참여대원,알게된점,깨달은점(소감),실천할점,통합소감문,협업능력,문제해결력,성찰실천력,활동시간(초),활동시간(분초),보고시간\n";
+      let csvContent = "\uFEFF팀/조,이름,학번,진행상황,총오답횟수,총힌트사용,S1오답(개념),S1힌트,S2오답(계산),S2힌트,S3오답(적용),S3힌트,문항별상세(오답/힌트),참여대원,알게된점,깨달은점(소감),실천할점,통합소감문,S1당류개념평가,S2성분계산평가,S3실생활적용평가,협업능력,문제해결력,성찰실천력,활동시간(초),활동시간(분초),보고시간\n";
       
       filteredData.forEach(d => {
         let team = '"' + (d.teamName || '').replace(/"/g, '""') + '"';
@@ -659,11 +801,30 @@
         let status = '"' + (d.status || 'STAGE 1') + '"';
         let wrongCnt = d.wrongCount !== undefined ? d.wrongCount : 0;
         let hintCnt = d.hintCount !== undefined ? d.hintCount : 0;
+        
+        let sStats = d.stageStats || { s1: { wrong: 0, hint: 0 }, s2: { wrong: 0, hint: 0 }, s3: { wrong: 0, hint: 0 } };
+        let s1W = sStats.s1?.wrong || 0, s1H = sStats.s1?.hint || 0;
+        let s2W = sStats.s2?.wrong || 0, s2H = sStats.s2?.hint || 0;
+        let s3W = sStats.s3?.wrong || 0, s3H = sStats.s3?.hint || 0;
+
+        let qStats = d.questionStats || {};
+        let qOrder = ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10','Q11','Q12','Q13','VAULT'];
+        let qDetailArr = qOrder.map(qk => {
+          let qs = qStats[qk];
+          if (!qs) return `${qk}:-`;
+          return `${qk}(오답${qs.wrong || 0}${qs.hint ? '/힌트' : ''})`;
+        });
+        let qDetailStr = '"' + qDetailArr.join(', ') + '"';
+
         let members = '"' + (d.memberNames || '').replace(/"/g, '""') + '"';
         let learned = '"' + (d.learnedPoint || '').replace(/"/g, '""') + '"';
         let realized = '"' + (d.realizedPoint || '').replace(/"/g, '""') + '"';
         let action = '"' + (d.actionPlan || '').replace(/"/g, '""') + '"';
         let ref = '"' + (d.reflection || '').replace(/"/g, '""') + '"';
+        
+        let s1Eval = '"' + (d.stage1Eval || '') + '"';
+        let s2Eval = '"' + (d.stage2Eval || '') + '"';
+        let s3Eval = '"' + (d.stage3Eval || '') + '"';
         let collab = '"' + (d.collabEval || '') + '"';
         let prob = '"' + (d.probEval || '') + '"';
         let reflectEval = '"' + (d.reflectEval || '') + '"';
@@ -680,7 +841,7 @@
            timeStr = '"' + d.timestamp.toDate().toLocaleString('ko-KR') + '"';
         }
 
-        csvContent += `${team},${name},${id},${status},${wrongCnt},${hintCnt},${members},${learned},${realized},${action},${ref},${collab},${prob},${reflectEval},${actSec},${actFmt},${timeStr}\n`;
+        csvContent += `${team},${name},${id},${status},${wrongCnt},${hintCnt},${s1W},${s1H},${s2W},${s2H},${s3W},${s3H},${qDetailStr},${members},${learned},${realized},${action},${ref},${s1Eval},${s2Eval},${s3Eval},${collab},${prob},${reflectEval},${actSec},${actFmt},${timeStr}\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

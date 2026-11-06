@@ -765,6 +765,46 @@
     let wrongCount = 0;
     let hintCount = 0;
     let openedHints = new Set();
+    let questionStats = {};
+    let stageStats = {
+      s1: { wrong: 0, hint: 0 },
+      s2: { wrong: 0, hint: 0 },
+      s3: { wrong: 0, hint: 0 }
+    };
+
+    function initTrackingStats() {
+      wrongCount = 0;
+      hintCount = 0;
+      openedHints.clear();
+      questionStats = {};
+      for (let i = 1; i <= 13; i++) {
+        questionStats['Q' + i] = { status: i === 1 ? 'solving' : 'pending', wrong: 0, hint: false };
+      }
+      questionStats['VAULT'] = { status: 'pending', wrong: 0, hint: false };
+      stageStats = {
+        s1: { wrong: 0, hint: 0 },
+        s2: { wrong: 0, hint: 0 },
+        s3: { wrong: 0, hint: 0 }
+      };
+    }
+    initTrackingStats();
+
+    function getQuestionKeyByPageId(pageId) {
+      let pageNum = parseInt(pageId.split('-')[1]);
+      if (pageNum >= 3 && pageNum <= 15) return 'Q' + (pageNum - 2);
+      if (pageNum === 16) return 'VAULT';
+      return null;
+    }
+
+    function getStageKeyByQuestionKey(qKey) {
+      if (!qKey) return null;
+      if (qKey === 'VAULT') return 's3';
+      let qNum = parseInt(qKey.replace('Q', ''));
+      if (qNum >= 1 && qNum <= 7) return 's1';
+      if (qNum >= 8 && qNum <= 10) return 's2';
+      if (qNum >= 11 && qNum <= 13) return 's3';
+      return null;
+    }
 
     function getStageNameByPageNum(pageNum) {
       if (pageNum >= 3 && pageNum <= 9) {
@@ -820,8 +860,21 @@
       if (isOpening && !openedHints.has(id)) {
         openedHints.add(id);
         hintCount++;
+        let qNum = parseInt(id.replace('h', ''));
+        let qKey = 'Q' + qNum;
+        if (questionStats[qKey]) {
+          questionStats[qKey].hint = true;
+        }
+        let sKey = getStageKeyByQuestionKey(qKey);
+        if (sKey && stageStats[sKey]) {
+          stageStats[sKey].hint++;
+        }
         if (window.updateProgressInFirebase) {
-          window.updateProgressInFirebase({ hintCount: hintCount });
+          window.updateProgressInFirebase({
+            hintCount: hintCount,
+            questionStats: questionStats,
+            stageStats: stageStats
+          });
         }
       }
     }
@@ -846,9 +899,7 @@
       }
       
       localStorage.setItem('escapeStartTime', Date.now());
-      wrongCount = 0;
-      hintCount = 0;
-      openedHints.clear();
+      initTrackingStats();
       playSound('snd-keypad'); 
       
       const loadingUi = document.getElementById('loading-ui');
@@ -862,7 +913,9 @@
           studentName: document.getElementById('studentName').value,
           wrongCount: 0,
           hintCount: 0,
-          currentQuestion: 'Q1'
+          currentQuestion: 'Q1',
+          questionStats: questionStats,
+          stageStats: stageStats
         });
       }
       
@@ -903,7 +956,9 @@
       if (window.updateProgressInFirebase) {
         window.updateProgressInFirebase({
           status: statusLabel,
-          currentQuestion: qLabel
+          currentQuestion: qLabel,
+          questionStats: questionStats,
+          stageStats: stageStats
         });
       }
       
@@ -959,11 +1014,22 @@
       }
     }
 
-    // 💡 정답/오답 처리 및 오답 시 힌트 노출 + 실시간 과정 추적
+    // 💡 정답/오답 처리 및 오답 시 힌트 노출 + 실시간 문항별/스테이지별 과정 추적
     function processResult(isCorrect, pageId, nextStageMsg = null) {
+      let curQKey = getQuestionKeyByPageId(pageId);
+      let curSKey = getStageKeyByQuestionKey(curQKey);
+
       if(isCorrect) {
         playSound('snd-correct');
+        if (curQKey && questionStats[curQKey]) {
+          questionStats[curQKey].status = 'clear';
+        }
         let nextNum = parseInt(pageId.split('-')[1]) + 1;
+        let nextQKey = getQuestionKeyByPageId('page-' + nextNum);
+        if (nextQKey && questionStats[nextQKey]) {
+          questionStats[nextQKey].status = 'solving';
+        }
+
         if(nextStageMsg) {
           showStageTransition(nextStageMsg, 'page-' + nextNum);
         } else {
@@ -975,14 +1041,26 @@
           if (window.updateProgressInFirebase) {
             window.updateProgressInFirebase({
               status: statusLabel,
-              currentQuestion: qLabel
+              currentQuestion: qLabel,
+              questionStats: questionStats,
+              stageStats: stageStats
             });
           }
         }
       } else {
         wrongCount++;
+        if (curQKey && questionStats[curQKey]) {
+          questionStats[curQKey].wrong = (questionStats[curQKey].wrong || 0) + 1;
+        }
+        if (curSKey && stageStats[curSKey]) {
+          stageStats[curSKey].wrong = (stageStats[curSKey].wrong || 0) + 1;
+        }
         if (window.updateProgressInFirebase) {
-          window.updateProgressInFirebase({ wrongCount: wrongCount });
+          window.updateProgressInFirebase({
+            wrongCount: wrongCount,
+            questionStats: questionStats,
+            stageStats: stageStats
+          });
         }
         playSound('snd-wrong');
         alert("분석이 틀렸습니다. 수사 파일과 단서를 다시 확인하세요!");
@@ -1008,8 +1086,16 @@
       if(currentInput === "105") {
         playSound('snd-door');
         document.getElementById('main-container').classList.add('door-open'); 
+        if (questionStats['VAULT']) {
+          questionStats['VAULT'].status = 'clear';
+        }
         if (window.updateProgressInFirebase) {
-          window.updateProgressInFirebase({ status: '수사일지 작성중', currentQuestion: '완료' });
+          window.updateProgressInFirebase({
+            status: '수사일지 작성중',
+            currentQuestion: '완료',
+            questionStats: questionStats,
+            stageStats: stageStats
+          });
         }
         
         if('speechSynthesis' in window) {
@@ -1031,8 +1117,18 @@
         }, 1500);
       } else {
         wrongCount++;
+        if (questionStats['VAULT']) {
+          questionStats['VAULT'].wrong = (questionStats['VAULT'].wrong || 0) + 1;
+        }
+        if (stageStats.s3) {
+          stageStats.s3.wrong = (stageStats.s3.wrong || 0) + 1;
+        }
         if (window.updateProgressInFirebase) {
-          window.updateProgressInFirebase({ wrongCount: wrongCount });
+          window.updateProgressInFirebase({
+            wrongCount: wrongCount,
+            questionStats: questionStats,
+            stageStats: stageStats
+          });
         }
         playSound('snd-wrong');
         alert("비밀번호가 틀렸습니다! 세 대원이 섭취한 당류의 총합(g)을 정확히 떠올려보세요.");
@@ -1079,6 +1175,8 @@
         reflection: combinedReflection,
         wrongCount: wrongCount,
         hintCount: hintCount,
+        questionStats: questionStats,
+        stageStats: stageStats,
         activityTime: activityTime
       };
 
