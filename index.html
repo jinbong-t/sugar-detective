@@ -733,17 +733,23 @@
         <img src="images/WJzjFN4.png" class="question-img" style="border: 4px solid #0f0; filter: grayscale(80%); max-height: 40vh;">
         <p style="font-size:20px; color:#0f0; font-weight:bold; margin-top: 5px;">사건 종결! 방탈출이 완료되었습니다.</p>
       </div>
-      <div class="right-pane">
-        <h2 style="color:var(--accent);">수사 일지 최종 제출</h2>
-        <p style="font-size:18px;">함께 활동한 조원들의 이름과 오늘 활동을 마친 소감을 각각 작성해주세요.</p>
+      <div class="right-pane" style="justify-content: flex-start; overflow-y: auto;">
+        <h2 style="color:var(--accent); margin-bottom: 5px;">수사 일지 최종 제출</h2>
+        <p style="font-size:15px; margin-bottom: 12px; color:#ccc;">함께 활동한 조원들의 이름과 오늘 수사를 통해 성장한 내용을 각각 작성해주세요.</p>
         
-        <h4 style="margin-bottom: 5px; color:#ddd;">👥 함께 활동한 조원 이름</h4>
-        <input type="text" id="memberNames" placeholder="예: 홍길동, 김철수, 변우석">
+        <h4 style="margin: 6px 0 4px 0; color:#00ffcc; font-size: 16px;">👥 함께 활동한 조원 이름</h4>
+        <input type="text" id="memberNames" placeholder="예: 홍길동, 김철수, 변우석" style="padding: 9px; margin: 2px 0 10px 0; font-size: 15px;">
         
-        <h4 style="margin-bottom: 5px; color:#ddd;">✍️ 활동 소감문</h4>
-        <textarea id="reflection" placeholder="오늘 방탈출 활동에서 느낀 점, 새롭게 알게 된 점 등을 10자 이상 정성껏 작성해주세요."></textarea>
+        <h4 style="margin: 6px 0 4px 0; color:#ffcc00; font-size: 16px;">💡 1. 새롭게 알게 된 점 (지식·개념)</h4>
+        <textarea id="learnedPoint" placeholder="당류의 종류, 영양성분표 계산법, 1회 제공량의 함정 등 오늘 새롭게 알게 된 사실을 적어주세요." style="height: 58px; padding: 8px; margin: 2px 0 8px 0; font-size: 15px;"></textarea>
+
+        <h4 style="margin: 6px 0 4px 0; color:#ff99cc; font-size: 16px;">✨ 2. 활동 소감 및 깨달은 점 (성찰)</h4>
+        <textarea id="realizedPoint" placeholder="조원들과 협동하며 느낀 점이나 내 평소 간식·음료 섭취 습관에 대해 깨달은 점을 적어주세요." style="height: 58px; padding: 8px; margin: 2px 0 8px 0; font-size: 15px;"></textarea>
+
+        <h4 style="margin: 6px 0 4px 0; color:#66ff66; font-size: 16px;">🏃 3. 앞으로 실천할 점 (실천 다짐)</h4>
+        <textarea id="actionPlan" placeholder="앞으로 마트나 편의점에서 식품을 고를 때, 혹은 일상에서 당류를 줄이기 위해 실천할 일을 적어주세요." style="height: 58px; padding: 8px; margin: 2px 0 12px 0; font-size: 15px;"></textarea>
         
-        <button class="action-btn" id="submitBtn" onclick="submitResult()">수사 일지 서버로 전송</button>
+        <button class="action-btn" id="submitBtn" onclick="submitResult()" style="padding: 12px 20px; font-size: 18px;">수사 일지 서버로 전송</button>
       </div>
     </div>
 
@@ -756,6 +762,24 @@
 
   <script>
     let currentInput = "";
+    let wrongCount = 0;
+    let hintCount = 0;
+    let openedHints = new Set();
+
+    function getStageNameByPageNum(pageNum) {
+      if (pageNum >= 3 && pageNum <= 9) {
+        return `STAGE 1 (Q${pageNum - 2})`;
+      } else if (pageNum >= 10 && pageNum <= 12) {
+        return `STAGE 2 (Q${pageNum - 2})`;
+      } else if (pageNum >= 13 && pageNum <= 15) {
+        return `STAGE 3 (Q${pageNum - 2})`;
+      } else if (pageNum === 16) {
+        return `STAGE 3 (금고 해독)`;
+      } else if (pageNum >= 17) {
+        return `수사일지 작성중`;
+      }
+      return `STAGE 1`;
+    }
     
     function startIntro() {
       document.getElementById('start-overlay').style.display = 'none';
@@ -791,7 +815,15 @@
 
     function toggleHint(id) {
       const el = document.getElementById(id);
-      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+      const isOpening = (el.style.display !== 'block');
+      el.style.display = isOpening ? 'block' : 'none';
+      if (isOpening && !openedHints.has(id)) {
+        openedHints.add(id);
+        hintCount++;
+        if (window.updateProgressInFirebase) {
+          window.updateProgressInFirebase({ hintCount: hintCount });
+        }
+      }
     }
 
     function goNext(currentPage, nextPageMsg = null) {
@@ -814,6 +846,9 @@
       }
       
       localStorage.setItem('escapeStartTime', Date.now());
+      wrongCount = 0;
+      hintCount = 0;
+      openedHints.clear();
       playSound('snd-keypad'); 
       
       const loadingUi = document.getElementById('loading-ui');
@@ -824,7 +859,10 @@
         window.startInvestigationInFirebase({
           teamName: document.getElementById('teamName').value,
           studentId: document.getElementById('studentId').value,
-          studentName: document.getElementById('studentName').value
+          studentName: document.getElementById('studentName').value,
+          wrongCount: 0,
+          hintCount: 0,
+          currentQuestion: 'Q1'
         });
       }
       
@@ -859,10 +897,14 @@
       document.getElementById('stage-msg').innerText = msg;
       ui.classList.add('show');
       
-      if (msg.includes('STAGE 2') && window.updateStageInFirebase) {
-        window.updateStageInFirebase('STAGE 2');
-      } else if (msg.includes('STAGE 3') && window.updateStageInFirebase) {
-        window.updateStageInFirebase('STAGE 3');
+      let nextNum = parseInt(nextPageId.split('-')[1]);
+      let statusLabel = getStageNameByPageNum(nextNum);
+      let qLabel = (nextNum >= 3 && nextNum <= 15) ? `Q${nextNum - 2}` : (nextNum === 16 ? '금고' : '완료');
+      if (window.updateProgressInFirebase) {
+        window.updateProgressInFirebase({
+          status: statusLabel,
+          currentQuestion: qLabel
+        });
       }
       
       setTimeout(() => {
@@ -917,7 +959,7 @@
       }
     }
 
-    // 💡 정답/오답 처리 및 오답 시 힌트 노출
+    // 💡 정답/오답 처리 및 오답 시 힌트 노출 + 실시간 과정 추적
     function processResult(isCorrect, pageId, nextStageMsg = null) {
       if(isCorrect) {
         playSound('snd-correct');
@@ -927,8 +969,21 @@
         } else {
           document.getElementById(pageId).classList.remove('active');
           document.getElementById('page-' + nextNum).classList.add('active');
+          
+          let statusLabel = getStageNameByPageNum(nextNum);
+          let qLabel = (nextNum >= 3 && nextNum <= 15) ? `Q${nextNum - 2}` : (nextNum === 16 ? '금고' : '완료');
+          if (window.updateProgressInFirebase) {
+            window.updateProgressInFirebase({
+              status: statusLabel,
+              currentQuestion: qLabel
+            });
+          }
         }
       } else {
+        wrongCount++;
+        if (window.updateProgressInFirebase) {
+          window.updateProgressInFirebase({ wrongCount: wrongCount });
+        }
         playSound('snd-wrong');
         alert("분석이 틀렸습니다. 수사 파일과 단서를 다시 확인하세요!");
         
@@ -953,6 +1008,9 @@
       if(currentInput === "105") {
         playSound('snd-door');
         document.getElementById('main-container').classList.add('door-open'); 
+        if (window.updateProgressInFirebase) {
+          window.updateProgressInFirebase({ status: '수사일지 작성중', currentQuestion: '완료' });
+        }
         
         if('speechSynthesis' in window) {
           let msg = new SpeechSynthesisUtterance("임무 성공.");
@@ -972,6 +1030,10 @@
           }, 2000);
         }, 1500);
       } else {
+        wrongCount++;
+        if (window.updateProgressInFirebase) {
+          window.updateProgressInFirebase({ wrongCount: wrongCount });
+        }
         playSound('snd-wrong');
         alert("비밀번호가 틀렸습니다! 세 대원이 섭취한 당류의 총합(g)을 정확히 떠올려보세요.");
         currentInput = "";
@@ -986,11 +1048,17 @@
 
     function submitResult() {
       let memberNames = document.getElementById('memberNames').value.trim();
-      let reflection = document.getElementById('reflection').value.trim();
+      let learnedPoint = document.getElementById('learnedPoint').value.trim();
+      let realizedPoint = document.getElementById('realizedPoint').value.trim();
+      let actionPlan = document.getElementById('actionPlan').value.trim();
       
       if(!memberNames) { alert("함께 활동한 조원들의 이름을 적어주세요!"); return; }
-      if(reflection.length < 10) { alert("소감문을 10자 이상 정성껏 작성해주세요!"); return; }
+      if(learnedPoint.length < 5) { alert("'새롭게 알게 된 점'을 5자 이상 정성껏 작성해주세요!"); return; }
+      if(realizedPoint.length < 5) { alert("'활동 소감 및 깨달은 점'을 5자 이상 정성껏 작성해주세요!"); return; }
+      if(actionPlan.length < 5) { alert("'앞으로 실천할 점'을 5자 이상 정성껏 작성해주세요!"); return; }
       
+      let combinedReflection = `[알게 된 점] ${learnedPoint}\n[깨달은 점] ${realizedPoint}\n[실천할 점] ${actionPlan}`;
+
       document.getElementById('submitBtn').innerText = "서버로 전송 중...";
       document.getElementById('submitBtn').disabled = true;
 
@@ -1005,7 +1073,12 @@
         studentId: document.getElementById('studentId').value,
         studentName: document.getElementById('studentName').value,
         memberNames: memberNames,
-        reflection: reflection,
+        learnedPoint: learnedPoint,
+        realizedPoint: realizedPoint,
+        actionPlan: actionPlan,
+        reflection: combinedReflection,
+        wrongCount: wrongCount,
+        hintCount: hintCount,
         activityTime: activityTime
       };
 
@@ -1101,7 +1174,7 @@
         
         await setDoc(doc(db, "investigations", docId), {
           ...data,
-          status: 'STAGE 1',
+          status: 'STAGE 1 (Q1)',
           timestamp: serverTimestamp()
         });
       } catch(e) {
@@ -1109,18 +1182,17 @@
       }
     };
     
-    window.updateStageInFirebase = async function(stageName) {
+    window.updateProgressInFirebase = async function(updateData) {
       try {
         if (db.app.options.apiKey === "YOUR_API_KEY") return;
         const docId = localStorage.getItem('investigationDocId');
         if(!docId) return;
         
         await updateDoc(doc(db, "investigations", docId), {
-          status: stageName,
-          timestamp: serverTimestamp()
+          ...updateData
         });
       } catch(e) {
-        console.error("Error updating stage: ", e);
+        console.error("Error updating progress: ", e);
       }
     };
 

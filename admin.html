@@ -265,6 +265,62 @@
     .stage-3 { background: rgba(0, 153, 255, 0.2); color: #0099ff; border: 1px solid rgba(0, 153, 255, 0.5); }
     .stage-clear { background: rgba(204, 0, 255, 0.2); color: #cc00ff; border: 1px solid rgba(204, 0, 255, 0.5); box-shadow: 0 0 10px rgba(204, 0, 255, 0.3); }
 
+    .process-stats {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
+    .stat-pill.warn {
+      background: rgba(255, 51, 102, 0.15);
+      border-color: rgba(255, 51, 102, 0.4);
+      color: #ff809f;
+    }
+
+    .stat-pill.hint {
+      background: rgba(255, 204, 0, 0.15);
+      border-color: rgba(255, 204, 0, 0.4);
+      color: #ffe066;
+    }
+
+    .reflection-item {
+      margin-bottom: 6px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 6px;
+      border-left: 3px solid #555;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .reflection-item:last-child { margin-bottom: 0; }
+    .reflection-item.learned { border-left-color: #ffcc00; }
+    .reflection-item.realized { border-left-color: #ff99cc; }
+    .reflection-item.action { border-left-color: #00ffcc; }
+    .reflection-label {
+      font-weight: bold;
+      font-size: 11px;
+      display: inline-block;
+      margin-right: 6px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
     .eval-select {
       background: #111;
       color: #e2e8f0;
@@ -273,7 +329,7 @@
       padding: 4px;
       margin-bottom: 5px;
       width: 100%;
-      font-size: 13px;
+      font-size: 12px;
     }
   </style>
 </head>
@@ -322,9 +378,9 @@
           <tr>
             <th>팀/조</th>
             <th>제출자 정보</th>
-            <th>진행 상황</th>
+            <th>실시간 풀이 과정</th>
             <th>참여 대원</th>
-            <th>최종 소감 및 보고</th>
+            <th>성찰 일지 (알게된 점 / 깨달은 점 / 실천할 점)</th>
             <th>과정중심평가 (자동저장)</th>
             <th>활동 시간</th>
             <th>관리</th>
@@ -432,12 +488,33 @@
           timeStr = `${m}분 ${s}초`;
         }
 
-        let stageClass = "stage-1";
-        if(data.status === "STAGE 2") stageClass = "stage-2";
-        else if(data.status === "STAGE 3") stageClass = "stage-3";
-        else if(data.status === "CLEAR") stageClass = "stage-clear";
-        
         let displayStatus = data.status || "STAGE 1";
+        let stageClass = "stage-1";
+        if(displayStatus.includes("STAGE 2")) stageClass = "stage-2";
+        else if(displayStatus.includes("STAGE 3") || displayStatus.includes("작성중")) stageClass = "stage-3";
+        else if(displayStatus === "CLEAR") stageClass = "stage-clear";
+
+        let wrongCnt = data.wrongCount !== undefined ? data.wrongCount : 0;
+        let hintCnt = data.hintCount !== undefined ? data.hintCount : 0;
+
+        let reflectionHtml = '';
+        if (data.learnedPoint || data.realizedPoint || data.actionPlan) {
+          reflectionHtml = `
+            <div style="min-width: 260px; max-width: 340px;">
+              <div class="reflection-item learned">
+                <span class="reflection-label" style="color:#ffcc00;">💡 알게된 점</span>${data.learnedPoint || '-'}
+              </div>
+              <div class="reflection-item realized">
+                <span class="reflection-label" style="color:#ff99cc;">✨ 깨달은 점</span>${data.realizedPoint || '-'}
+              </div>
+              <div class="reflection-item action">
+                <span class="reflection-label" style="color:#00ffcc;">🏃 실천할 점</span>${data.actionPlan || '-'}
+              </div>
+            </div>
+          `;
+        } else {
+          reflectionHtml = `<div class="reflection-text" style="max-width: 280px;">${data.reflection || '-'}</div>`;
+        }
 
         const tr = document.createElement('tr');
         tr.style.animation = 'rowSlideIn 0.4s ease-out forwards';
@@ -448,27 +525,42 @@
             <div style="font-weight: bold; color: #fff;">${data.studentName || '이름 없음'}</div>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">학번: ${data.studentId || '-'}</div>
           </td>
-          <td><span class="stage-badge ${stageClass}">${displayStatus}</span></td>
-          <td><div style="max-width: 150px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
-          <td><div class="reflection-text" style="max-width: 250px;">${data.reflection || '-'}</div></td>
           <td>
-            <div style="display: flex; gap: 10px;">
-              <div style="flex: 1;">
-                <span style="font-size: 11px; color:#94a3b8;">협업능력:</span><br>
-                <select class="eval-select collab-eval" data-id="${data.id}">
-                  <option value="">평가 안함</option>
-                  <option value="상" ${data.collabEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
+            <span class="stage-badge ${stageClass}">${displayStatus}</span>
+            <div class="process-stats">
+              <span class="stat-pill ${wrongCnt > 0 ? 'warn' : ''}">❌ 오답 ${wrongCnt}회</span>
+              <span class="stat-pill ${hintCnt > 0 ? 'hint' : ''}">🔍 힌트 ${hintCnt}회</span>
+            </div>
+          </td>
+          <td><div style="max-width: 140px; line-height: 1.4;">${data.memberNames || '-'}</div></td>
+          <td>${reflectionHtml}</td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 155px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 11px; color:#94a3b8; white-space:nowrap;">협업능력:</span>
+                <select class="eval-select collab-eval" data-id="${data.id}" style="margin-bottom:0; width: 100px;">
+                  <option value="">미평가</option>
+                  <option value="상" ${data.collabEval === '상' ? 'selected' : ''}>상 (우수)</option>
                   <option value="중" ${data.collabEval === '중' ? 'selected' : ''}>중 (보통)</option>
-                  <option value="하" ${data.collabEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
+                  <option value="하" ${data.collabEval === '하' ? 'selected' : ''}>하 (노력)</option>
                 </select>
               </div>
-              <div style="flex: 1;">
-                <span style="font-size: 11px; color:#94a3b8;">문제해결력:</span><br>
-                <select class="eval-select prob-eval" data-id="${data.id}">
-                  <option value="">평가 안함</option>
-                  <option value="상" ${data.probEval === '상' ? 'selected' : ''}>상 (매우우수)</option>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 11px; color:#94a3b8; white-space:nowrap;">문제해결:</span>
+                <select class="eval-select prob-eval" data-id="${data.id}" style="margin-bottom:0; width: 100px;">
+                  <option value="">미평가</option>
+                  <option value="상" ${data.probEval === '상' ? 'selected' : ''}>상 (우수)</option>
                   <option value="중" ${data.probEval === '중' ? 'selected' : ''}>중 (보통)</option>
-                  <option value="하" ${data.probEval === '하' ? 'selected' : ''}>하 (노력요함)</option>
+                  <option value="하" ${data.probEval === '하' ? 'selected' : ''}>하 (노력)</option>
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 11px; color:#94a3b8; white-space:nowrap;">성찰·실천:</span>
+                <select class="eval-select reflect-eval" data-id="${data.id}" style="margin-bottom:0; width: 100px;">
+                  <option value="">미평가</option>
+                  <option value="상" ${data.reflectEval === '상' ? 'selected' : ''}>상 (우수)</option>
+                  <option value="중" ${data.reflectEval === '중' ? 'selected' : ''}>중 (보통)</option>
+                  <option value="하" ${data.reflectEval === '하' ? 'selected' : ''}>하 (노력)</option>
                 </select>
               </div>
             </div>
@@ -487,6 +579,9 @@
       });
       document.querySelectorAll('.prob-eval').forEach(sel => {
         sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'probEval', e.target.value));
+      });
+      document.querySelectorAll('.reflect-eval').forEach(sel => {
+        sel.addEventListener('change', (e) => updateEval(e.target.dataset.id, 'reflectEval', e.target.value));
       });
       
       document.querySelectorAll('.btn-delete-row').forEach(btn => {
@@ -555,17 +650,23 @@
         filteredData = allData.filter(d => d.classStr === classFilter.value);
       }
 
-      let csvContent = "\uFEFF팀/조,이름,학번,진행상황,참여대원,소감문,협업능력,문제해결력,활동시간(초),활동시간(분초),보고시간\n";
+      let csvContent = "\uFEFF팀/조,이름,학번,진행상황,오답횟수,힌트사용횟수,참여대원,알게된점,깨달은점(소감),실천할점,통합소감문,협업능력,문제해결력,성찰실천력,활동시간(초),활동시간(분초),보고시간\n";
       
       filteredData.forEach(d => {
         let team = '"' + (d.teamName || '').replace(/"/g, '""') + '"';
         let name = '"' + (d.studentName || '').replace(/"/g, '""') + '"';
         let id = '"' + (d.studentId || '').replace(/"/g, '""') + '"';
         let status = '"' + (d.status || 'STAGE 1') + '"';
+        let wrongCnt = d.wrongCount !== undefined ? d.wrongCount : 0;
+        let hintCnt = d.hintCount !== undefined ? d.hintCount : 0;
         let members = '"' + (d.memberNames || '').replace(/"/g, '""') + '"';
+        let learned = '"' + (d.learnedPoint || '').replace(/"/g, '""') + '"';
+        let realized = '"' + (d.realizedPoint || '').replace(/"/g, '""') + '"';
+        let action = '"' + (d.actionPlan || '').replace(/"/g, '""') + '"';
         let ref = '"' + (d.reflection || '').replace(/"/g, '""') + '"';
         let collab = '"' + (d.collabEval || '') + '"';
         let prob = '"' + (d.probEval || '') + '"';
+        let reflectEval = '"' + (d.reflectEval || '') + '"';
         
         let actSec = (d.activityTime !== undefined && d.status === 'CLEAR') ? d.activityTime : '';
         let actStr = "";
@@ -579,7 +680,7 @@
            timeStr = '"' + d.timestamp.toDate().toLocaleString('ko-KR') + '"';
         }
 
-        csvContent += `${team},${name},${id},${status},${members},${ref},${collab},${prob},${actSec},${actFmt},${timeStr}\n`;
+        csvContent += `${team},${name},${id},${status},${wrongCnt},${hintCnt},${members},${learned},${realized},${action},${ref},${collab},${prob},${reflectEval},${actSec},${actFmt},${timeStr}\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
