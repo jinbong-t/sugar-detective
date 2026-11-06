@@ -404,6 +404,97 @@
       padding-bottom: 2px;
       border-bottom: 1px dashed rgba(0, 255, 204, 0.3);
     }
+
+    /* 과정중심평가 가이드 패널 스타일 */
+    .guide-container {
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 204, 0.3);
+      border-radius: 16px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    .guide-header {
+      padding: 16px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background: rgba(0, 255, 204, 0.06);
+      border-bottom: 1px solid transparent;
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .guide-header:hover {
+      background: rgba(0, 255, 204, 0.12);
+    }
+    .guide-header.open {
+      border-bottom-color: var(--glass-border);
+    }
+
+    .guide-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .guide-toggle-btn {
+      font-size: 13px;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.08);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .guide-body {
+      padding: 20px 25px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .guide-body.hidden {
+      display: none;
+    }
+
+    .guide-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .guide-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+
+    .legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #cbd5e1;
+      font-size: 12.5px;
+    }
   </style>
 </head>
 <body>
@@ -432,6 +523,84 @@
       <div class="stat-card danger">
         <div class="stat-title">최근 작전 완료 시간</div>
         <div class="stat-value" id="latest-time" style="font-size: 24px; line-height: 1.5; margin-top: 5px;">--:--:--</div>
+      </div>
+    </div>
+
+    <!-- 과정중심평가 대시보드 안내 가이드 -->
+    <div class="guide-container">
+      <div class="guide-header open" id="guide-header">
+        <div class="guide-title">
+          <span>📘 교사용 과정중심평가 대시보드 활용 가이드 (문항 칩 범례 및 평가 기준 안내)</span>
+        </div>
+        <div class="guide-toggle-btn" id="guide-toggle-text">접기 ▲</div>
+      </div>
+      <div class="guide-body" id="guide-body">
+        <div class="guide-card">
+          <h3>🎯 1. 문항별 미니 현황판 (Q1~Q13, 🔒금고) 범례</h3>
+          <div class="legend-list">
+            <div class="legend-item">
+              <span class="q-chip clear-perfect" style="width: 42px; display:inline-block;">Q1</span>
+              <span><strong>초록색:</strong> 오답·힌트 없이 <strong>단번에 정답</strong> 통과 (완벽 이해)</span>
+            </div>
+            <div class="legend-item">
+              <span class="q-chip clear-retry" style="width: 42px; display:inline-block;">Q2(1)</span>
+              <span><strong>주황색:</strong> <strong>1회 오답</strong> 또는 <strong>힌트(*) 열람</strong> 후 통과</span>
+            </div>
+            <div class="legend-item">
+              <span class="q-chip clear-struggle" style="width: 42px; display:inline-block;">Q8(3)</span>
+              <span><strong>빨간색:</strong> <strong>2회 이상 오답</strong> 후 통과 — <em>괄호 숫자는 오답 횟수</em></span>
+            </div>
+            <div class="legend-item">
+              <span class="q-chip solving" style="width: 42px; display:inline-block;">Q5</span>
+              <span><strong>노란색(점멸):</strong> 현재 해당 팀이 <strong>풀고 있는 문항</strong> (실시간 추적)</span>
+            </div>
+            <div class="legend-item" style="color: var(--text-muted); font-size: 11.5px; margin-top: 2px;">
+              💡 각 문항 칩 위에 마우스를 올리면 상세 기록 툴팁을 확인할 수 있습니다.
+            </div>
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <h3>📊 2. 스테이지별 성취도 평가 가이드</h3>
+          <div class="legend-list">
+            <div class="legend-item">
+              <strong style="color:#ffcc00; min-width: 85px;">S1 당류개념</strong>
+              <span><strong>[Q1~Q7]</strong> 단당류·이당류 구조, 자연당과 첨가당 구분, 당류의 기능 및 과잉섭취 문제점 이해도</span>
+            </div>
+            <div class="legend-item">
+              <strong style="color:#00ff00; min-width: 85px;">S2 성분계산</strong>
+              <span><strong>[Q8~Q10]</strong> 1회 제공량과 총 내용량을 비교하여 실제 섭취 당류(g) 및 각설탕 개수를 계산하는 능력</span>
+            </div>
+            <div class="legend-item">
+              <strong style="color:#0099ff; min-width: 85px;">S3 실생활적용</strong>
+              <span><strong>[Q11~Q13, 🔒]</strong> WHO 권장량(25g) 기준 알리바이 검증 및 마트에서 당류를 줄이는 식품 선택 능력</span>
+            </div>
+            <div class="legend-item" style="color: var(--text-muted); font-size: 11.5px; margin-top: 2px;">
+              💡 단계별 오답·힌트 횟수를 참고하여 <strong>상(우수) / 중(보통) / 하(노력)</strong> 선택 시 즉시 자동 저장됩니다.
+            </div>
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <h3>🌟 3. 3단계 성찰 일지 & 핵심 역량 평가</h3>
+          <div class="legend-list">
+            <div class="legend-item">
+              <span class="reflection-label" style="color:#ffcc00; min-width: 68px; text-align:center;">💡 알게된 점</span>
+              <span>수업을 통해 새롭게 습득한 핵심 지식 및 개념 정리 확인</span>
+            </div>
+            <div class="legend-item">
+              <span class="reflection-label" style="color:#ff99cc; min-width: 68px; text-align:center;">✨ 깨달은 점</span>
+              <span>모둠원과의 협동 소감 및 평소 자신의 식습관 반성·성찰</span>
+            </div>
+            <div class="legend-item">
+              <span class="reflection-label" style="color:#00ffcc; min-width: 68px; text-align:center;">🏃 실천할 점</span>
+              <span>일상생활에서 당류 섭취를 줄이기 위한 구체적인 실천 다짐</span>
+            </div>
+            <div class="legend-item" style="color: var(--text-muted); font-size: 11.5px; margin-top: 2px;">
+              📥 우측 상단 <strong>[엑셀 저장]</strong> 클릭 시 문항별·스테이지별 통계와 3단계 성찰일지, 6개 평가등급이 모두 CSV로 다운로드됩니다.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -476,6 +645,15 @@
     const classFilter = document.getElementById('class-filter');
     const btnExport = document.getElementById('btn-export');
     const btnReset = document.getElementById('btn-reset');
+    const guideHeader = document.getElementById('guide-header');
+    const guideBody = document.getElementById('guide-body');
+    const guideToggleText = document.getElementById('guide-toggle-text');
+
+    guideHeader.addEventListener('click', () => {
+      const isHidden = guideBody.classList.toggle('hidden');
+      guideHeader.classList.toggle('open', !isHidden);
+      guideToggleText.innerText = isHidden ? '펼치기 ▼' : '접기 ▲';
+    });
 
     let allData = [];
     let classList = new Set();
