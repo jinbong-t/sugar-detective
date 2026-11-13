@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>당류 탐정 대탈출</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Serif+KR:wght@700&family=Orbitron:wght@700&display=swap');
 
@@ -302,6 +303,85 @@
       .key { height: 50px; font-size: 20px; box-shadow: 0 4px 0 #111; }
       .key:active { box-shadow: 0 1px 0 #111; transform: translateY(3px); }
     }
+
+    /* 교사용 수업 활용 가이드 및 모드 설정 모달 스타일 */
+    .teacher-guide-fab {
+      position: fixed; top: 15px; right: 20px; z-index: 4500;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(15, 23, 42, 0.9); color: #00ffcc;
+      border: 1.5px solid #00ffcc; border-radius: 30px;
+      padding: 8px 16px; font-size: 14px; font-weight: bold;
+      cursor: pointer; box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+      transition: all 0.2s; font-family: 'Gowun Dodum', sans-serif;
+    }
+    .teacher-guide-fab:hover {
+      background: #00ffcc; color: #000; transform: translateY(-2px);
+    }
+    .mode-badge-pill {
+      font-size: 11px; padding: 2px 8px; border-radius: 12px;
+      background: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid #ffcc00;
+    }
+
+    .teacher-modal-backdrop {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px);
+      z-index: 6000; display: none; align-items: center; justify-content: center;
+      padding: 20px; box-sizing: border-box;
+    }
+    .teacher-modal-backdrop.open { display: flex; }
+
+    .teacher-modal {
+      background: #182032; border: 2px solid #00ffcc; border-radius: 16px;
+      max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
+      padding: 28px; color: #e2e8f0; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      font-family: 'Gowun Dodum', sans-serif; position: relative;
+    }
+    .teacher-modal h2 {
+      margin: 0 0 8px 0; color: #00ffcc; font-size: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .teacher-modal-close {
+      background: rgba(255, 51, 102, 0.2); color: #ff668c; border: 1px solid #ff3366;
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;
+    }
+    .mode-tabs {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0;
+    }
+    .mode-tab-btn {
+      background: #0f172a; border: 1.5px solid #334155; color: #94a3b8;
+      padding: 14px 12px; border-radius: 12px; cursor: pointer; text-align: left;
+      transition: all 0.2s; font-family: 'Gowun Dodum', sans-serif;
+    }
+    .mode-tab-btn:hover { border-color: #64748b; color: #fff; }
+    .mode-tab-btn.active {
+      background: rgba(0, 255, 204, 0.12); border-color: #00ffcc; color: #fff;
+      box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+    }
+    .mode-tab-btn strong { display: block; font-size: 16px; color: #00ffcc; margin-bottom: 4px; }
+    .mode-tab-btn span { font-size: 12.5px; line-height: 1.4; display: block; }
+
+    .mode-panel {
+      display: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 20px; margin-top: 10px; line-height: 1.65; font-size: 15px;
+    }
+    .mode-panel.active { display: block; }
+
+    .platform-pill {
+      display: inline-block; background: rgba(255, 204, 0, 0.15); color: #ffcc00;
+      border: 1px solid rgba(255, 204, 0, 0.4); padding: 3px 10px; border-radius: 15px;
+      font-size: 13px; font-weight: bold; margin: 2px 3px;
+    }
+
+    .code-copy-box {
+      background: #090d16; color: #a5f3fc; padding: 14px; border-radius: 8px;
+      border: 1px solid #334155; font-family: monospace; font-size: 12.5px;
+      max-height: 180px; overflow-y: auto; white-space: pre-wrap; margin: 10px 0;
+    }
+    .small-btn {
+      background: #00ffcc; color: #000; border: none; padding: 8px 16px;
+      border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;
+    }
+    .small-btn:hover { background: #33ffdd; }
   </style>
 </head>
 <body>
@@ -325,6 +405,119 @@
 
   <div class="stage-transition" id="stage-ui"><div class="stage-title" id="stage-msg">STAGE CLEAR</div></div>
   <div class="success-flash" id="success-flash"></div>
+
+  <!-- 우측 상단 교사용 수업 활용 가이드 및 모드 설정 버튼 -->
+  <button class="teacher-guide-fab" onclick="openTeacherModal()">
+    👩‍🏫 교사용 수업 안내 & 모드 설정
+    <span class="mode-badge-pill" id="current-mode-badge">기본(이미지저장)</span>
+  </button>
+
+  <!-- 교사용 수업 활용 가이드 모달 -->
+  <div class="teacher-modal-backdrop" id="teacher-modal-backdrop">
+    <div class="teacher-modal">
+      <h2>
+        <span>🕵️‍♂️ [당류 탐정 대탈출] 교사용 수업 활용 가이드</span>
+        <button class="teacher-modal-close" onclick="closeTeacherModal()">닫기 ✕</button>
+      </h2>
+      <p style="margin: 4px 0 12px 0; color: #94a3b8; font-size: 14px;">
+        전국 어디서나 별도 회원가입이나 서버 구축 없이 바로 수업에 활용하실 수 있도록 <strong>3가지 수업 운영 모드</strong>를 지원합니다.
+      </p>
+
+      <div class="mode-tabs">
+        <button class="mode-tab-btn active" id="tab-btn-1" onclick="switchModalTab(1)">
+          <strong>📸 버전 1. 이미지 보고서 제출 (기본)</strong>
+          <span>서버 연결 없이 학생 기기에 수사 보고서 이미지를 즉시 저장 (패들렛·클래스룸 제출용)</span>
+        </button>
+        <button class="mode-tab-btn" id="tab-btn-2" onclick="switchModalTab(2)">
+          <strong>📊 버전 2. 내 구글 시트로 결과 받기</strong>
+          <span>선생님 개인 구글 스프레드시트 주소를 연결해 우리 반 학생 응답을 실시간 표로 수집</span>
+        </button>
+        <button class="mode-tab-btn" id="tab-btn-3" onclick="switchModalTab(3)">
+          <strong>🔐 버전 3. 개발 교사 전용 대시보드</strong>
+          <span>지휘 통제실(실시간 문항 추적 대시보드) 연동 모드 (비밀번호 인증 필요)</span>
+        </button>
+      </div>
+
+      <!-- 탭 1: 버전 1 설명 -->
+      <div class="mode-panel active" id="mode-panel-1">
+        <h3 style="margin-top:0; color:#ffcc00;">📸 버전 1: 수사 보고서 이미지 저장 모드 (현재 기본 설정)</h3>
+        <p>별도의 설정 없이 <strong>지금 이 웹앱 주소를 학생들에게 그대로 안내</strong>하시면 됩니다. 외부 데이터베이스에 학생의 개인정보(학번·이름)를 저장하지 않아 안전하며, 동시 접속 제한 없이 전국 모든 학급에서 쾌적하게 사용할 수 있습니다.</p>
+        
+        <div style="background: rgba(0, 255, 204, 0.08); border-left: 4px solid #00ffcc; padding: 14px; border-radius: 8px; margin: 14px 0;">
+          <strong style="color:#00ffcc; font-size: 16px;">💡 수업 및 과정중심평가 활용 팁 (이렇게 지도해 주세요!)</strong>
+          <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+            <li>학생들이 모든 방탈출 문항(Q1~Q13, 비밀 금고)을 해결하고 <strong>3단계 성찰 일지(새롭게 알게 된 점 / 깨달은 점 / 실천할 점)</strong>를 작성합니다.</li>
+            <li>완료 시 <strong>[1급 특수요원 임명장 + 문항별/스테이지별 오답·힌트 기록 + 3단계 성찰 일지]</strong>가 한 장의 결과 카드로 화면에 나타납니다.</li>
+            <li>화면 하단의 <strong>[📸 내 수사 보고서 이미지로 저장하기]</strong> 버튼을 누르면 고화질 이미지 파일(PNG)로 즉시 다운로드됩니다.</li>
+            <li>저장한 보고서 이미지를 아래 플랫폼에 업로드하여 제출하도록 안내하시면 <strong>수행평가 및 과정중심평가 근거 자료</strong>로 완벽하게 활용하실 수 있습니다!
+              <div style="margin-top: 8px;">
+                <span class="platform-pill">📌 패들렛 (Padlet)</span>
+                <span class="platform-pill">🏫 구글 클래스룸</span>
+                <span class="platform-pill">🔔 띵커벨 (Tkbell)</span>
+                <span class="platform-pill">💬 학급 오픈채팅방 / 하이클래스 / 위두랑</span>
+              </div>
+            </li>
+          </ol>
+        </div>
+        <button class="small-btn" onclick="activateStandaloneMode()">✅ 버전 1 (기본 이미지 저장 모드)로 사용하기</button>
+      </div>
+
+      <!-- 탭 2: 버전 2 설명 -->
+      <div class="mode-panel" id="mode-panel-2">
+        <h3 style="margin-top:0; color:#00ffcc;">📊 버전 2: 선생님 개인 구글 시트(Google Sheets)로 실시간 수집하기</h3>
+        <p>선생님의 구글 드라이브에 스프레드시트를 하나 만들고 아래 스크립트를 붙여넣으면, <strong>우리 반 학생들의 풀이 기록(오답·힌트 횟수)과 성찰 일지(알게 된 점·깨달은 점·실천할 점)가 선생님의 구글 시트에 자동으로 차곡차곡 기록</strong>됩니다! (물론 학생 화면에서 이미지 저장도 동시에 가능합니다.)</p>
+
+        <div style="margin: 12px 0;">
+          <strong>1단계:</strong> 새 구글 스프레드시트를 열고 상단 메뉴 <strong>[확장 프로그램] → [Apps Script]</strong>를 클릭합니다.<br>
+          <strong>2단계:</strong> 기존 코드를 지우고 아래 코드를 복사해 붙여넣은 뒤, 우측 상단 <strong>[배포] → [새 배포] → 유형: '웹 앱' (액세스 권한: '모든 사용자')</strong>로 배포합니다.
+          <div class="code-copy-box" id="apps-script-code">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["제출일시", "조이름", "학번", "이름", "참여조원", "총오답수", "총힌트수", "S1오답/힌트", "S2오답/힌트", "S3오답/힌트", "알게된점", "깨달은점(소감)", "실천할점", "소요시간(분초)"]);
+  }
+  var data = JSON.parse(e.postData.contents);
+  var s1 = (data.stageStats && data.stageStats.s1) ? (data.stageStats.s1.wrong + "회/" + data.stageStats.s1.hint + "회") : "0/0";
+  var s2 = (data.stageStats && data.stageStats.s2) ? (data.stageStats.s2.wrong + "회/" + data.stageStats.s2.hint + "회") : "0/0";
+  var s3 = (data.stageStats && data.stageStats.s3) ? (data.stageStats.s3.wrong + "회/" + data.stageStats.s3.hint + "회") : "0/0";
+  var timeStr = Math.floor((data.activityTime || 0) / 60) + "분 " + ((data.activityTime || 0) % 60) + "초";
+  sheet.appendRow([new Date(), data.teamName, data.studentId, data.studentName, data.memberNames, data.wrongCount, data.hintCount, s1, s2, s3, data.learnedPoint, data.realizedPoint, data.actionPlan, timeStr]);
+  return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+}</div>
+          <button class="small-btn" onclick="copyAppsScriptCode()" style="background:#38bdf8;">📋 위 Apps Script 코드 복사하기</button>
+        </div>
+
+        <div style="margin-top: 16px; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px;">
+          <strong>3단계: 배포 후 발급된 '웹 앱 URL (https://script.google.com/macros/s/.../exec)'을 아래에 입력하세요.</strong>
+          <input type="text" id="custom-sheet-url" placeholder="https://script.google.com/macros/s/.../exec 주소 붙여넣기" style="margin: 8px 0; font-size: 14px; padding: 10px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="small-btn" onclick="generateSheetClassLink()">🔗 우리 반 전용 접속 링크 생성 & 현재 기기 적용</button>
+          </div>
+          <div id="generated-link-box" style="display:none; margin-top: 12px; padding: 12px; background:#090d16; border:1px solid #00ffcc; border-radius:8px;">
+            <div style="color:#00ffcc; font-weight:bold; margin-bottom:6px;">🎉 우리 반 전용 배포 링크가 완성되었습니다! (학생들에게 이 주소를 공유하거나 QR로 만들어 주세요)</div>
+            <input type="text" id="generated-link-input" readonly style="margin: 4px 0 8px 0; font-size: 13px; color:#ffcc00;">
+            <button class="small-btn" onclick="copyGeneratedLink()">📋 학생 배포용 링크 복사하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 탭 3: 버전 3 설명 -->
+      <div class="mode-panel" id="mode-panel-3">
+        <h3 style="margin-top:0; color:#ff99cc;">🔐 버전 3: 개발 교사 전용 실시간 지휘통제실 연동 모드</h3>
+        <p>이 모드는 본 웹앱을 개발한 선생님의 수업 전용 파이어베이스 데이터베이스 및 <strong>실시간 지휘 통제실 대시보드(admin.html)</strong>와 연동되는 모드입니다.<br>
+        <span style="color:#94a3b8; font-size:13.5px;">※ 타 학교 선생님께서는 DB 용량 보호 및 개인정보 보호를 위해 <strong>버전 1(이미지 저장)</strong> 또는 <strong>버전 2(구글 시트 연동)</strong>를 이용해 주세요!</span></p>
+
+        <div style="margin-top: 14px; background: rgba(255, 51, 102, 0.08); border: 1px solid rgba(255, 51, 102, 0.3); padding: 16px; border-radius: 8px;">
+          <strong>🔑 교사 인증 비밀번호 입력</strong>
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+            <input type="password" id="teacher-secret-pw" placeholder="비밀번호 입력" style="margin: 0; max-width: 220px; padding: 10px;">
+            <button class="small-btn" onclick="activateTeacherFirebaseMode()" style="background:#ff3366; color:#fff;">인증 및 대시보드 연동 켜기</button>
+            <a href="admin.html" target="_blank" id="open-admin-link" style="display:none; color:#00ffcc; font-weight:bold; margin-left: 10px; text-decoration:underline;">👉 지휘 통제실(admin.html) 열기</a>
+          </div>
+          <div id="teacher-pw-msg" style="margin-top: 8px; font-size: 13.5px; color: #ffcc00;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 
   <div class="investigation-access" id="loading-ui">
@@ -1142,6 +1335,265 @@
       document.getElementById('page-18').classList.add('active');
     }
 
+    // 3가지 수업 운영 모드 관리 (standalone: 기본 이미지저장 / sheet: 교사별 구글시트 / firebase: 1120 인증 전용 대시보드)
+    window.appMode = 'standalone';
+    window.customSheetUrl = '';
+
+    function initAppModeFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const sheetParam = params.get('sheet');
+      const modeParam = params.get('mode');
+
+      if (modeParam === '1120' || localStorage.getItem('sugarTeacherMode') === '1120') {
+        window.appMode = 'firebase';
+        updateModeBadgeUI();
+      } else if (sheetParam) {
+        try {
+          window.customSheetUrl = atob(decodeURIComponent(sheetParam));
+        } catch(e) {
+          window.customSheetUrl = sheetParam;
+        }
+        window.appMode = 'sheet';
+        updateModeBadgeUI();
+      } else if (localStorage.getItem('sugarCustomSheetUrl')) {
+        window.customSheetUrl = localStorage.getItem('sugarCustomSheetUrl');
+        window.appMode = 'sheet';
+        updateModeBadgeUI();
+      } else {
+        window.appMode = 'standalone';
+        updateModeBadgeUI();
+      }
+    }
+
+    function updateModeBadgeUI() {
+      const badge = document.getElementById('current-mode-badge');
+      const submitBtn = document.getElementById('submitBtn');
+      const adminLink = document.getElementById('open-admin-link');
+      if (!badge) return;
+
+      if (window.appMode === 'firebase') {
+        badge.innerText = '🔐 지휘통제실 연동중';
+        badge.style.color = '#ff668c';
+        badge.style.borderColor = '#ff3366';
+        badge.style.background = 'rgba(255,51,102,0.2)';
+        if (submitBtn) submitBtn.innerText = '수사 일지 서버 전송 및 보고서 발급';
+        if (adminLink) adminLink.style.display = 'inline-block';
+      } else if (window.appMode === 'sheet') {
+        badge.innerText = '📊 구글시트 연동중';
+        badge.style.color = '#00ffcc';
+        badge.style.borderColor = '#00ffcc';
+        badge.style.background = 'rgba(0,255,204,0.2)';
+        if (submitBtn) submitBtn.innerText = '구글 시트 제출 및 수사 보고서 발급';
+        if (adminLink) adminLink.style.display = 'none';
+      } else {
+        badge.innerText = '📸 기본(이미지저장)';
+        badge.style.color = '#ffcc00';
+        badge.style.borderColor = '#ffcc00';
+        badge.style.background = 'rgba(255,204,0,0.2)';
+        if (submitBtn) submitBtn.innerText = '수사 일지 완료 및 보고서 발급';
+        if (adminLink) adminLink.style.display = 'none';
+      }
+    }
+
+    function openTeacherModal() {
+      document.getElementById('teacher-modal-backdrop').classList.add('open');
+      if (window.appMode === 'sheet') switchModalTab(2);
+      else if (window.appMode === 'firebase') switchModalTab(3);
+      else switchModalTab(1);
+    }
+
+    function closeTeacherModal() {
+      document.getElementById('teacher-modal-backdrop').classList.remove('open');
+    }
+
+    function switchModalTab(tabNum) {
+      [1, 2, 3].forEach(n => {
+        document.getElementById('tab-btn-' + n).classList.toggle('active', n === tabNum);
+        document.getElementById('mode-panel-' + n).classList.toggle('active', n === tabNum);
+      });
+    }
+
+    function activateStandaloneMode() {
+      window.appMode = 'standalone';
+      window.customSheetUrl = '';
+      localStorage.removeItem('sugarTeacherMode');
+      localStorage.removeItem('sugarCustomSheetUrl');
+      updateModeBadgeUI();
+      alert('버전 1 (기본 이미지 저장 모드)로 설정되었습니다! 학생들은 완료 후 수사 보고서를 이미지로 저장해 패들렛·클래스룸 등에 제출할 수 있습니다.');
+      closeTeacherModal();
+    }
+
+    function copyAppsScriptCode() {
+      const code = document.getElementById('apps-script-code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert('구글 Apps Script 코드가 복사되었습니다! 새 구글 시트의 [확장 프로그램] -> [Apps Script]에 붙여넣어 주세요.');
+      });
+    }
+
+    function generateSheetClassLink() {
+      const urlInput = document.getElementById('custom-sheet-url').value.trim();
+      if (!urlInput || !urlInput.startsWith('https://script.google.com/')) {
+        alert('올바른 구글 Apps Script 웹 앱 URL(https://script.google.com/macros/s/.../exec)을 입력해주세요.');
+        return;
+      }
+      window.customSheetUrl = urlInput;
+      window.appMode = 'sheet';
+      localStorage.removeItem('sugarTeacherMode');
+      localStorage.setItem('sugarCustomSheetUrl', urlInput);
+      updateModeBadgeUI();
+
+      const encoded = encodeURIComponent(btoa(urlInput));
+      const baseUrl = window.location.origin + window.location.pathname;
+      const fullLink = `${baseUrl}?sheet=${encoded}`;
+      document.getElementById('generated-link-input').value = fullLink;
+      document.getElementById('generated-link-box').style.display = 'block';
+    }
+
+    function copyGeneratedLink() {
+      const linkVal = document.getElementById('generated-link-input').value;
+      navigator.clipboard.writeText(linkVal).then(() => {
+        alert('우리 반 전용 접속 링크가 복사되었습니다! 학생들에게 이 링크(또는 QR코드)를 안내해주세요.');
+      });
+    }
+
+    function activateTeacherFirebaseMode() {
+      const pw = document.getElementById('teacher-secret-pw').value.trim();
+      const msgEl = document.getElementById('teacher-pw-msg');
+      if (pw === '1120') {
+        window.appMode = 'firebase';
+        localStorage.setItem('sugarTeacherMode', '1120');
+        localStorage.removeItem('sugarCustomSheetUrl');
+        updateModeBadgeUI();
+        msgEl.style.color = '#00ffcc';
+        msgEl.innerHTML = '✅ <strong>인증 성공!</strong> 현재 기기가 지휘 통제실(admin.html) 실시간 연동 모드로 설정되었습니다.<br>학생들에게 한번에 연동된 주소를 주시려면 <code>' + window.location.origin + window.location.pathname + '?mode=1120</code> 주소를 공유하세요!';
+      } else {
+        msgEl.style.color = '#ff3366';
+        msgEl.innerText = '❌ 비밀번호가 일치하지 않습니다.';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', initAppModeFromUrl);
+
+    function downloadReportImage(studentName, teamName) {
+      const cardEl = document.getElementById('id-card');
+      const btnEl = document.getElementById('btn-download-img');
+      if (!cardEl || typeof html2canvas === 'undefined') {
+        alert('화면을 직접 캡처(스크린샷)하여 저장해주세요!');
+        return;
+      }
+      if (btnEl) {
+        btnEl.innerText = '📸 고화질 이미지 생성 중...';
+        btnEl.disabled = true;
+      }
+      html2canvas(cardEl, {
+        backgroundColor: '#111827',
+        scale: 2,
+        useCORS: true
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `당류탐정수사보고서_${teamName || '수사대'}_${studentName || '요원'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        if (btnEl) {
+          btnEl.innerText = '✅ 이미지 저장 완료! (다시 저장하기)';
+          btnEl.disabled = false;
+        }
+      }).catch(err => {
+        console.error('Image capture error:', err);
+        alert('이미지 변환 중 오류가 발생했습니다. 기기의 화면 캡처(스크린샷) 기능을 이용해주세요.');
+        if (btnEl) {
+          btnEl.innerText = '📸 내 수사 보고서 이미지로 저장하기';
+          btnEl.disabled = false;
+        }
+      });
+    }
+
+    function renderGrandFinaleScreen(data, modeStatusText) {
+      const page18 = document.getElementById('page-18');
+      page18.style.display = 'block';
+      let min = Math.floor((data.activityTime || 0) / 60);
+      let sec = (data.activityTime || 0) % 60;
+      let timeFormatted = `${min}분 ${sec}초`;
+      let s1W = data.stageStats?.s1?.wrong || 0, s1H = data.stageStats?.s1?.hint || 0;
+      let s2W = data.stageStats?.s2?.wrong || 0, s2H = data.stageStats?.s2?.hint || 0;
+      let s3W = data.stageStats?.s3?.wrong || 0, s3H = data.stageStats?.s3?.hint || 0;
+
+      page18.innerHTML = `
+        <div class="grand-finale-overlay" id="grand-finale" style="display: flex; overflow-y: auto; padding: 20px; box-sizing: border-box; justify-content: flex-start;">
+          <div class="matrix-bg"></div>
+          <div class="warning-text" style="font-size: 38px; margin-top: 10px; margin-bottom: 6px;">SYSTEM OVERRIDE</div>
+          <div class="decrypting-text" style="font-size: 16px; margin-bottom: 15px;">${modeStatusText}</div>
+          
+          <div class="id-card-container" id="id-card" style="width: 100%; max-width: 640px; padding-bottom: 18px; background: linear-gradient(135deg, #0f172a, #1e293b);">
+            <div class="id-header" style="font-size: 18px; padding: 10px;">🕵️‍♂️ 당류 탐정 수사대 1급 특수요원 임명장 & 수사 보고서</div>
+            <div class="id-body" style="padding: 15px 20px 10px 20px; align-items: flex-start;">
+              <div class="id-photo" style="width: 75px; height: 90px; font-size: 40px; margin-right: 18px; flex-shrink: 0;">🕵️‍♂️</div>
+              <div class="id-info" style="font-size: 14px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                  <div><span>요원 정보 (학번 / 이름)</span><p style="font-size: 16px; margin: 2px 0;">${data.studentId} ${data.studentName}</p></div>
+                  <div><span>소속 조 / 함께한 대원</span><p style="font-size: 15px; margin: 2px 0;">${data.teamName} (${data.memberNames})</p></div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; background: rgba(0,0,0,0.35); padding: 8px 10px; border-radius: 8px; font-size: 12.5px; color: #cbd5e1; margin-bottom: 10px;">
+                  <strong style="color:#00ffcc;">⏱ 소요시간: ${timeFormatted}</strong> |
+                  <span>총 오답: ${data.wrongCount}회 / 힌트: ${data.hintCount}회</span>
+                  <span style="color:#94a3b8;">(S1 개념 ${s1W}/${s1H} · S2 계산 ${s2W}/${s2H} · S3 적용 ${s3W}/${s3H})</span>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 3px solid #ffcc00; margin-bottom: 6px; font-size: 13.5px; line-height: 1.45;">
+                  <strong style="color:#ffcc00;">💡 새롭게 알게 된 점:</strong> ${data.learnedPoint}
+                </div>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 3px solid #ff99cc; margin-bottom: 6px; font-size: 13.5px; line-height: 1.45;">
+                  <strong style="color:#ff99cc;">✨ 소감 및 깨달은 점:</strong> ${data.realizedPoint}
+                </div>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; border-left: 3px solid #00ffcc; font-size: 13.5px; line-height: 1.45;">
+                  <strong style="color:#00ffcc;">🏃 앞으로 실천할 점:</strong> ${data.actionPlan}
+                </div>
+              </div>
+            </div>
+            <div class="stamp-overlay" id="mission-stamp" style="top: 55px; right: 20px; font-size: 18px; padding: 5px 10px;">MISSION CLEAR</div>
+          </div>
+          
+          <div class="congratulations-msg" id="congrats-msg" style="margin-top: 16px; font-size: 16px; max-width: 640px; width: 100%;">
+            <button id="btn-download-img" onclick="downloadReportImage('${data.studentName.replace(/'/g, "")}', '${data.teamName.replace(/'/g, "")}')" style="background: #00ffcc; color: #000; border: none; padding: 14px 28px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,204,0.5); font-family: 'Gowun Dodum', sans-serif; margin-bottom: 10px; width: 100%;">
+              📸 내 수사 보고서 이미지로 저장하기 (PNG 다운로드)
+            </button>
+            <div style="background: rgba(255,255,255,0.08); padding: 10px 15px; border-radius: 8px; font-size: 14px; color: #fde047; line-height: 1.5;">
+              📌 저장한 수사 보고서 이미지를 선생님의 안내에 따라 <strong>패들렛(Padlet), 구글 클래스룸, 띵커벨, 학급 오픈채팅방</strong> 등에 업로드하여 제출하세요!
+            </div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const warnEl = document.querySelector('.warning-text');
+        if (warnEl) {
+          warnEl.innerText = "MISSION ACCOMPLISHED";
+          warnEl.style.color = "#00ffcc";
+          warnEl.style.textShadow = "0 0 30px #00ffcc";
+          warnEl.style.animation = "none";
+        }
+        setTimeout(() => {
+          const cardEl = document.getElementById('id-card');
+          if (cardEl) cardEl.classList.add('reveal');
+          if(document.getElementById('snd-success')) {
+            document.getElementById('snd-success').currentTime = 0;
+            document.getElementById('snd-success').play().catch(e=>console.log(e));
+          }
+          setTimeout(() => {
+            const stampEl = document.getElementById('mission-stamp');
+            if (stampEl) stampEl.classList.add('stamp-it');
+            if(document.getElementById('snd-door')) {
+              document.getElementById('snd-door').currentTime = 0;
+              document.getElementById('snd-door').play().catch(e=>console.log(e));
+            }
+            setTimeout(() => {
+              const msgEl = document.getElementById('congrats-msg');
+              if (msgEl) msgEl.style.opacity = '1';
+            }, 600);
+          }, 800);
+        }, 600);
+      }, 1200);
+    }
+
     function submitResult() {
       let memberNames = document.getElementById('memberNames').value.trim();
       let learnedPoint = document.getElementById('learnedPoint').value.trim();
@@ -1155,7 +1607,7 @@
       
       let combinedReflection = `[알게 된 점] ${learnedPoint}\n[깨달은 점] ${realizedPoint}\n[실천할 점] ${actionPlan}`;
 
-      document.getElementById('submitBtn').innerText = "서버로 전송 중...";
+      document.getElementById('submitBtn').innerText = "보고서 생성 및 처리 중...";
       document.getElementById('submitBtn').disabled = true;
 
       let activityTime = 0;
@@ -1180,82 +1632,25 @@
         activityTime: activityTime
       };
 
-      if (window.submitResultToFirebase) {
+      if (window.appMode === 'firebase' && window.submitResultToFirebase) {
         window.submitResultToFirebase(data, function() {
-          const page18 = document.getElementById('page-18');
-          page18.style.display = 'block';
-          
-          page18.innerHTML = `
-            <div class="grand-finale-overlay" id="grand-finale" style="display: flex;">
-              <div class="matrix-bg"></div>
-              <div class="warning-text">SYSTEM OVERRIDE</div>
-              <div class="decrypting-text">데이터베이스 정보 갱신 중...</div>
-              
-              <div class="id-card-container" id="id-card">
-                <div class="id-header">당류 탐정 수사대 1급 특수요원</div>
-                <div class="id-body">
-                  <div class="id-photo">🕵️‍♂️</div>
-                  <div class="id-info">
-                    <span>NAME</span>
-                    <p>${data.studentName}</p>
-                    <span>TEAM</span>
-                    <p>${data.teamName}</p>
-                    <span>ID NO</span>
-                    <p>${data.studentId}</p>
-                    <div style="margin-top:15px; font-size:14px; color:#ffcc00; line-height:1.5; border-top:1px dashed #555; padding-top:10px; font-style:italic;">
-                      "식품 속에 숨겨진 당류의 유혹을 밝혀내고<br>
-                      건강을 지켜낸 탁월한 수사 능력을 인정하여<br>
-                      이 임명장을 수여합니다."
-                    </div>
-                  </div>
-                </div>
-                <div class="stamp-overlay" id="mission-stamp">MISSION ACCOMPLISHED</div>
-              </div>
-              
-              <div class="congratulations-msg" id="congrats-msg">
-                모든 수사가 끝났습니다.<br>화면을 촬영하여 요원 임명장을 보관하세요!
-              </div>
-            </div>
-          `;
-          
-          // Animation sequence
-          setTimeout(() => {
-            document.querySelector('.warning-text').innerText = "DECRYPT COMPLETE";
-            document.querySelector('.warning-text').style.color = "#00ffcc";
-            document.querySelector('.warning-text').style.textShadow = "0 0 30px #00ffcc";
-            document.querySelector('.warning-text').style.animation = "none";
-            document.querySelector('.decrypting-text').innerText = "요원 신원 확인 완료.";
-            
-            setTimeout(() => {
-              document.getElementById('id-card').classList.add('reveal');
-              if(document.getElementById('snd-success')) {
-                document.getElementById('snd-success').currentTime = 0;
-                document.getElementById('snd-success').play().catch(e=>console.log(e));
-              }
-              
-              setTimeout(() => {
-                document.getElementById('mission-stamp').classList.add('stamp-it');
-                if(document.getElementById('snd-door')) {
-                  document.getElementById('snd-door').currentTime = 0;
-                  document.getElementById('snd-door').play().catch(e=>console.log(e));
-                }
-                
-                setTimeout(() => {
-                  document.getElementById('congrats-msg').style.opacity = '1';
-                }, 1000);
-              }, 1200);
-            }, 1000);
-          }, 2500);
-
-        }, function(error) {
-          alert("오류 발생: " + error.message);
-          document.getElementById('submitBtn').disabled = false;
-          document.getElementById('submitBtn').innerText = "다시 전송하기";
+          renderGrandFinaleScreen(data, "✅ 지휘 통제실(교사용 대시보드) 서버 전송 완료!");
+        });
+      } else if (window.appMode === 'sheet' && window.customSheetUrl) {
+        fetch(window.customSheetUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(data)
+        }).then(() => {
+          renderGrandFinaleScreen(data, "✅ 선생님의 구글 스프레드시트로 수사 일지가 전송되었습니다!");
+        }).catch(err => {
+          console.error("Google Sheet send error:", err);
+          renderGrandFinaleScreen(data, "⚠️ 시트 전송 확인 필요 — 아래 버튼으로 보고서 이미지를 꼭 저장하세요!");
         });
       } else {
-        alert("Firebase가 초기화되지 않았습니다.");
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').innerText = "다시 전송하기";
+        // 버전 1: 기본 독립 실행(이미지 저장) 모드 (DB 부하 0%)
+        renderGrandFinaleScreen(data, "✅ 수사 일지 작성 완료! 아래 버튼으로 보고서 이미지를 저장하세요.");
       }
     }
   </script>
@@ -1266,6 +1661,7 @@
     
     window.startInvestigationInFirebase = async function(data) {
       try {
+        if (window.appMode !== 'firebase') return;
         if (db.app.options.apiKey === "YOUR_API_KEY") return;
         const docId = data.studentId + "_" + Date.now();
         localStorage.setItem('investigationDocId', docId);
@@ -1282,6 +1678,7 @@
     
     window.updateProgressInFirebase = async function(updateData) {
       try {
+        if (window.appMode !== 'firebase') return;
         if (db.app.options.apiKey === "YOUR_API_KEY") return;
         const docId = localStorage.getItem('investigationDocId');
         if(!docId) return;
@@ -1296,6 +1693,10 @@
 
     window.submitResultToFirebase = async function(data, onSuccess, onError) {
       try {
+        if (window.appMode !== 'firebase') {
+          onSuccess();
+          return;
+        }
         if (db.app.options.apiKey === "YOUR_API_KEY") {
           console.warn("파이어베이스가 설정되지 않았습니다. 임시로 엔딩 화면을 보여줍니다.");
           setTimeout(onSuccess, 1500);
