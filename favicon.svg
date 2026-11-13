@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1f2c"/>
+      <stop offset="100%" stop-color="#0b0f19"/>
+    </linearGradient>
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4d4d"/>
+      <stop offset="100%" stop-color="#c9302c"/>
+    </linearGradient>
+    <radialGradient id="lensGlow" cx="45%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#00ffcc" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0099ff" stop-opacity="0.1"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 둥근 다크 배경 -->
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)" stroke="#334155" stroke-width="4"/>
+
+  <!-- 돋보기 안쪽 각설탕 (3D 큐브 형태) -->
+  <g transform="translate(30, 28)">
+    <!-- 윗면 -->
+    <polygon points="24,6 44,15 24,24 4,15" fill="#ffffff"/>
+    <!-- 왼쪽면 -->
+    <polygon points="4,15 24,24 24,45 4,36" fill="#e2e8f0"/>
+    <!-- 오른쪽면 -->
+    <polygon points="24,24 44,15 44,36 24,45" fill="#cbd5e1"/>
+    <!-- 반짝이 포인트 -->
+    <circle cx="16" cy="15" r="2" fill="#00ffcc"/>
+    <circle cx="30" cy="28" r="1.8" fill="#ff3366"/>
+  </g>
+
+  <!-- 돋보기 손잡이 -->
+  <line x1="78" y1="78" x2="108" y2="108" stroke="#eab308" stroke-width="14" stroke-linecap="round"/>
+  <line x1="78" y1="78" x2="108" y2="108" stroke="url(#rimGrad)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- 돋보기 렌즈 & 테두리 -->
+  <circle cx="54" cy="54" r="34" fill="url(#lensGlow)" stroke="url(#rimGrad)" stroke-width="9"/>
+  <circle cx="54" cy="54" r="29" fill="none" stroke="#ffcc00" stroke-width="2" stroke-opacity="0.7"/>
+
+  <!-- 렌즈 하이라이트 -->
+  <path d="M 34 36 A 22 22 0 0 1 64 30" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+</svg>
