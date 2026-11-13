@@ -1393,14 +1393,47 @@
         btnEl.innerText = '📸 이미지 생성 중...';
         btnEl.disabled = true;
       }
+
+      // 캡처 직전에 애니메이션 클래스를 해제하고 불투명도 100%, 정배율로 고정하여 색감 저하 및 흐림 현상 완전 차단
+      const stampEl = document.getElementById('mission-stamp');
+      cardEl.classList.remove('reveal');
+      cardEl.style.animation = 'none';
+      cardEl.style.opacity = '1';
+      cardEl.style.transform = 'none';
+
+      if (stampEl) {
+        stampEl.classList.remove('stamp-it');
+        stampEl.style.animation = 'none';
+        stampEl.style.opacity = '1';
+        stampEl.style.transform = 'rotate(-10deg) scale(1)';
+      }
+
       html2canvas(cardEl, {
-        backgroundColor: '#111111',
-        scale: 2,
-        useCORS: true
+        backgroundColor: '#1a1a1a',
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          const clonedCard = clonedDoc.getElementById('id-card');
+          const clonedStamp = clonedDoc.getElementById('mission-stamp');
+          if (clonedCard) {
+            clonedCard.style.animation = 'none';
+            clonedCard.style.opacity = '1';
+            clonedCard.style.transform = 'none';
+            clonedCard.style.background = '#1a1a1a';
+          }
+          if (clonedStamp) {
+            clonedStamp.style.animation = 'none';
+            clonedStamp.style.opacity = '1';
+            clonedStamp.style.transform = 'rotate(-10deg) scale(1)';
+          }
+        }
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `당류탐정수사보고서_${teamName || '수사대'}_${studentName || '요원'}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
         if (btnEl) {
           btnEl.innerText = '📸 수사 보고서 이미지 저장 완료!';
@@ -1427,50 +1460,60 @@
       let s3W = data.stageStats?.s3?.wrong || 0, s3H = data.stageStats?.s3?.hint || 0;
 
       page18.innerHTML = `
-        <div class="grand-finale-overlay" id="grand-finale" style="display: flex; overflow-y: auto; padding: 15px 0;">
+        <div class="grand-finale-overlay" id="grand-finale" style="display: flex;">
           <div class="matrix-bg"></div>
-          <div class="warning-text" style="margin-bottom: 10px;">SYSTEM OVERRIDE</div>
-          <div class="decrypting-text" style="margin-bottom: 20px;">데이터베이스 정보 갱신 중...</div>
+          <div class="warning-text" style="font-size: 44px; margin-bottom: 4px;">SYSTEM OVERRIDE</div>
+          <div class="decrypting-text" style="font-size: 18px; margin-bottom: 12px;">데이터베이스 정보 갱신 중...</div>
           
-          <div class="id-card-container" id="id-card" style="width: 560px; padding-bottom: 16px;">
-            <div class="id-header">당류 탐정 수사대 1급 특수요원</div>
-            <div class="id-body" style="padding: 18px 22px 12px 22px; align-items: flex-start;">
-              <div class="id-photo" style="margin-top: 4px;">🕵️‍♂️</div>
+          <div class="id-card-container" id="id-card" style="width: 780px; min-height: auto; padding-bottom: 16px;">
+            <div class="id-header" style="font-size: 19px; padding: 9px;">당류 탐정 수사대 1급 특수요원 임명장</div>
+            <div class="id-body" style="padding: 16px 22px 10px 22px; align-items: center;">
+              <div class="id-photo" style="width: 90px; height: 108px; font-size: 46px; margin-right: 20px; flex-shrink: 0;">🕵️‍♂️</div>
               <div class="id-info">
-                <span>NAME</span>
-                <p>${data.studentName}</p>
-                <span>TEAM</span>
-                <p>${data.teamName} <small style="color:#aaa; font-size:13px;">(대원: ${data.memberNames})</small></p>
-                <span>ID NO</span>
-                <p>${data.studentId}</p>
-                <div style="margin-top:10px; font-size:13.5px; color:#ffcc00; line-height:1.45; border-top:1px dashed #555; padding-top:8px; font-style:italic;">
-                  "식품 속에 숨겨진 당류의 유혹을 밝혀내고<br>
-                  건강을 지켜낸 탁월한 수사 능력을 인정하여<br>
-                  이 임명장을 수여합니다."
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; padding-right: 185px; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 8px;">
+                  <div>
+                    <span>NAME (이름)</span>
+                    <p style="border:none; margin: 2px 0 0 0; padding:0; font-size: 19px; font-weight:bold; color:#ffffff;">${data.studentName}</p>
+                  </div>
+                  <div>
+                    <span>ID NO (학번)</span>
+                    <p style="border:none; margin: 2px 0 0 0; padding:0; font-size: 19px; font-weight:bold; color:#ffffff;">${data.studentId}</p>
+                  </div>
+                  <div>
+                    <span>TEAM (소속 조 / 대원)</span>
+                    <p style="border:none; margin: 2px 0 0 0; padding:0; font-size: 16px; color:#ffffff;">${data.teamName} <small style="color:#cccccc;">(${data.memberNames})</small></p>
+                  </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <div style="font-size: 13.5px; color: #ffcc00; line-height: 1.4; font-style: italic;">
+                    "식품 속에 숨겨진 당류의 유혹을 밝혀내고 건강을 지켜낸 탁월한 수사 능력을 인정하여 이 임명장을 수여합니다."
+                  </div>
+                  <div style="font-size: 12px; color: #00ffcc; background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.3); padding: 4px 10px; border-radius: 6px; white-space: nowrap;">
+                    ⏱ ${timeFormatted} | 오답 ${data.wrongCount} · 힌트 ${data.hintCount} <span style="color:#94a3b8;">(S1:${s1W}/${s1H} S2:${s2W}/${s2H} S3:${s3W}/${s3H})</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div style="margin: 0 22px; padding-top: 10px; border-top: 1px solid #333; text-align: left; font-size: 13px; color: #ddd; line-height: 1.5;">
-              <div style="color:#00ffcc; font-size:12px; margin-bottom:6px;">
-                ⏱ 소요시간: ${timeFormatted} &nbsp;|&nbsp; 총 오답 ${data.wrongCount}회 · 힌트 ${data.hintCount}회 <span style="color:#888;">(S1:${s1W}/${s1H} · S2:${s2W}/${s2H} · S3:${s3W}/${s3H})</span>
+
+            <div style="margin: 2px 22px 0 22px; padding-top: 10px; border-top: 1px dashed #444; display: flex; flex-direction: column; gap: 6px; text-align: left; font-size: 13.5px; color: #ffffff; line-height: 1.45;">
+              <div style="background: #111111; padding: 7px 12px; border-radius: 6px; border-left: 4px solid #ffcc00; word-break: break-all;">
+                <strong style="color:#ffcc00; margin-right: 6px;">💡 새롭게 알게 된 점:</strong>${data.learnedPoint}
               </div>
-              <div style="background:#161616; padding:6px 10px; border-radius:6px; border-left:3px solid #ffcc00; margin-bottom:5px; word-break:break-all;">
-                <strong style="color:#ffcc00;">💡 알게 된 점:</strong> ${data.learnedPoint}
+              <div style="background: #111111; padding: 7px 12px; border-radius: 6px; border-left: 4px solid #ff99cc; word-break: break-all;">
+                <strong style="color:#ff99cc; margin-right: 6px;">✨ 소감 및 깨달은 점:</strong>${data.realizedPoint}
               </div>
-              <div style="background:#161616; padding:6px 10px; border-radius:6px; border-left:3px solid #ff99cc; margin-bottom:5px; word-break:break-all;">
-                <strong style="color:#ff99cc;">✨ 깨달은 점:</strong> ${data.realizedPoint}
-              </div>
-              <div style="background:#161616; padding:6px 10px; border-radius:6px; border-left:3px solid #00ffcc; word-break:break-all;">
-                <strong style="color:#00ffcc;">🏃 실천할 점:</strong> ${data.actionPlan}
+              <div style="background: #111111; padding: 7px 12px; border-radius: 6px; border-left: 4px solid #00ffcc; word-break: break-all;">
+                <strong style="color:#00ffcc; margin-right: 6px;">🏃 앞으로 실천할 점:</strong>${data.actionPlan}
               </div>
             </div>
-            <div class="stamp-overlay" id="mission-stamp" style="top: 105px; right: 15px;">MISSION ACCOMPLISHED</div>
+
+            <div class="stamp-overlay" id="mission-stamp" style="top: 48px; right: 18px; font-size: 15px; padding: 5px 10px; letter-spacing: 0.5px;">MISSION ACCOMPLISHED</div>
           </div>
           
-          <div class="congratulations-msg" id="congrats-msg" style="margin-top: 20px; font-size: 24px;">
-            모든 수사가 끝났습니다.<br>화면을 촬영하거나 아래 버튼으로 임명장을 저장하세요!
-            <div style="margin-top: 12px;">
-              <button id="btn-download-img" onclick="downloadReportImage('${data.studentName.replace(/'/g, "")}', '${data.teamName.replace(/'/g, "")}')" style="background: rgba(0,255,204,0.15); color: #00ffcc; border: 1.5px solid #00ffcc; padding: 10px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: 'Gowun Dodum', sans-serif; transition: 0.2s;">
+          <div class="congratulations-msg" id="congrats-msg" style="margin-top: 14px; font-size: 19px;">
+            모든 수사가 끝났습니다. 화면을 캡처하거나 아래 버튼으로 임명장을 저장해 제출하세요!
+            <div style="margin-top: 8px;">
+              <button id="btn-download-img" onclick="downloadReportImage('${data.studentName.replace(/'/g, "")}', '${data.teamName.replace(/'/g, "")}')" style="background: #00ffcc; color: #000; border: none; padding: 9px 24px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: 'Gowun Dodum', sans-serif; box-shadow: 0 0 15px rgba(0,255,204,0.4);">
                 📸 수사 보고서 이미지 저장
               </button>
             </div>
@@ -1478,7 +1521,6 @@
         </div>
       `;
 
-      // 원래 애니메이션 시퀀스 100% 동일 복구
       setTimeout(() => {
         document.querySelector('.warning-text').innerText = "DECRYPT COMPLETE";
         document.querySelector('.warning-text').style.color = "#00ffcc";
@@ -1487,18 +1529,31 @@
         document.querySelector('.decrypting-text').innerText = "요원 신원 확인 완료.";
         
         setTimeout(() => {
-          document.getElementById('id-card').classList.add('reveal');
+          const cardEl = document.getElementById('id-card');
+          cardEl.classList.add('reveal');
           if(document.getElementById('snd-success')) {
             document.getElementById('snd-success').currentTime = 0;
             document.getElementById('snd-success').play().catch(e=>console.log(e));
           }
+          setTimeout(() => {
+            // 카드 애니메이션이 끝난 후 html2canvas 캡처 시 잘림을 유발하는 transform 제거
+            cardEl.style.opacity = '1';
+            cardEl.style.transform = 'none';
+            cardEl.classList.remove('reveal');
+          }, 1050);
           
           setTimeout(() => {
-            document.getElementById('mission-stamp').classList.add('stamp-it');
+            const stampEl = document.getElementById('mission-stamp');
+            stampEl.classList.add('stamp-it');
             if(document.getElementById('snd-door')) {
               document.getElementById('snd-door').currentTime = 0;
               document.getElementById('snd-door').play().catch(e=>console.log(e));
             }
+            setTimeout(() => {
+              stampEl.style.opacity = '1';
+              stampEl.style.transform = 'rotate(-10deg) scale(1)';
+              stampEl.classList.remove('stamp-it');
+            }, 1450);
             
             setTimeout(() => {
               document.getElementById('congrats-msg').style.opacity = '1';
