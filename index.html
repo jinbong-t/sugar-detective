@@ -16,12 +16,13 @@
     body {
       margin: 0; padding: 0; background-color: var(--bg-dark); color: var(--text-main);
       font-family: 'Gowun Dodum', sans-serif; overflow: hidden; /* 바디 전체 스크롤 방지 */
+      width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center;
     }
 
-    /* 태블릿 가로 모드 최적화 (꽉 찬 화면) */
+    /* 태블릿 가로 모드 최적화 (꽉 찬 화면 + 세로로 긴 창에서도 찌그러지지 않게 높이 제한) */
     .container {
-      max-width: 1200px; width: 100vw; height: 100vh; /* 화면 크기 고정 */
-      margin: 0 auto; padding: 20px; box-sizing: border-box;
+      max-width: 1200px; width: 100vw; height: 100vh; max-height: 760px; /* 태블릿 가로 비율 고정 */
+      margin: auto; padding: 20px 20px 32px 20px; box-sizing: border-box;
       display: flex; flex-direction: column; justify-content: center;
       position: relative;
     }
@@ -304,84 +305,56 @@
       .key:active { box-shadow: 0 1px 0 #111; transform: translateY(3px); }
     }
 
-    /* 교사용 수업 활용 가이드 및 모드 설정 모달 스타일 */
-    .teacher-guide-fab {
-      position: fixed; top: 15px; right: 20px; z-index: 4500;
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(15, 23, 42, 0.9); color: #00ffcc;
-      border: 1.5px solid #00ffcc; border-radius: 30px;
-      padding: 8px 16px; font-size: 14px; font-weight: bold;
-      cursor: pointer; box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
-      transition: all 0.2s; font-family: 'Gowun Dodum', sans-serif;
-    }
-    .teacher-guide-fab:hover {
-      background: #00ffcc; color: #000; transform: translateY(-2px);
-    }
-    .mode-badge-pill {
-      font-size: 11px; padding: 2px 8px; border-radius: 12px;
-      background: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid #ffcc00;
-    }
-
+    /* 교사용 수업 안내 모달 스타일 (담백하고 깔끔한 디자인) */
     .teacher-modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px);
+      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
       z-index: 6000; display: none; align-items: center; justify-content: center;
       padding: 20px; box-sizing: border-box;
     }
     .teacher-modal-backdrop.open { display: flex; }
 
     .teacher-modal {
-      background: #182032; border: 2px solid #00ffcc; border-radius: 16px;
-      max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
-      padding: 28px; color: #e2e8f0; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-      font-family: 'Gowun Dodum', sans-serif; position: relative;
+      background: #222; border: 1px solid #444; border-radius: 12px;
+      max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto;
+      padding: 24px 28px; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+      font-family: 'Gowun Dodum', sans-serif;
     }
     .teacher-modal h2 {
-      margin: 0 0 8px 0; color: #00ffcc; font-size: 24px;
+      margin: 0 0 14px 0; color: #fff; font-size: 20px;
       display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #3a3a3a; padding-bottom: 12px;
     }
     .teacher-modal-close {
-      background: rgba(255, 51, 102, 0.2); color: #ff668c; border: 1px solid #ff3366;
-      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;
+      background: #333; color: #ccc; border: 1px solid #555;
+      padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
     }
-    .mode-tabs {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0;
-    }
-    .mode-tab-btn {
-      background: #0f172a; border: 1.5px solid #334155; color: #94a3b8;
-      padding: 14px 12px; border-radius: 12px; cursor: pointer; text-align: left;
-      transition: all 0.2s; font-family: 'Gowun Dodum', sans-serif;
-    }
-    .mode-tab-btn:hover { border-color: #64748b; color: #fff; }
-    .mode-tab-btn.active {
-      background: rgba(0, 255, 204, 0.12); border-color: #00ffcc; color: #fff;
-      box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
-    }
-    .mode-tab-btn strong { display: block; font-size: 16px; color: #00ffcc; margin-bottom: 4px; }
-    .mode-tab-btn span { font-size: 12.5px; line-height: 1.4; display: block; }
+    .teacher-modal-close:hover { background: #444; color: #fff; }
 
-    .mode-panel {
-      display: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 20px; margin-top: 10px; line-height: 1.65; font-size: 15px;
+    .guide-section {
+      background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+      padding: 15px 18px; margin-bottom: 14px; font-size: 14.5px; line-height: 1.6;
     }
-    .mode-panel.active { display: block; }
-
-    .platform-pill {
-      display: inline-block; background: rgba(255, 204, 0, 0.15); color: #ffcc00;
-      border: 1px solid rgba(255, 204, 0, 0.4); padding: 3px 10px; border-radius: 15px;
-      font-size: 13px; font-weight: bold; margin: 2px 3px;
+    .guide-section h3 {
+      margin: 0 0 6px 0; font-size: 16px; color: #ffcc00;
+    }
+    .guide-section p {
+      margin: 0; color: #ccc; font-size: 14px;
     }
 
     .code-copy-box {
-      background: #090d16; color: #a5f3fc; padding: 14px; border-radius: 8px;
-      border: 1px solid #334155; font-family: monospace; font-size: 12.5px;
-      max-height: 180px; overflow-y: auto; white-space: pre-wrap; margin: 10px 0;
+      background: #111; color: #a5f3fc; padding: 10px 12px; border-radius: 6px;
+      border: 1px solid #333; font-family: monospace; font-size: 12px;
+      max-height: 120px; overflow-y: auto; white-space: pre-wrap; margin: 8px 0;
     }
     .small-btn {
-      background: #00ffcc; color: #000; border: none; padding: 8px 16px;
-      border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;
+      background: #444; color: #fff; border: 1px solid #666; padding: 7px 14px;
+      border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;
+      font-family: 'Gowun Dodum', sans-serif; transition: 0.2s;
     }
-    .small-btn:hover { background: #33ffdd; }
+    .small-btn:hover { background: #555; }
+    .small-btn.primary { background: var(--accent); border-color: var(--accent); }
+    .small-btn.primary:hover { background: var(--accent-hover); }
   </style>
 </head>
 <body>
@@ -406,71 +379,28 @@
   <div class="stage-transition" id="stage-ui"><div class="stage-title" id="stage-msg">STAGE CLEAR</div></div>
   <div class="success-flash" id="success-flash"></div>
 
-  <!-- 우측 상단 교사용 수업 활용 가이드 및 모드 설정 버튼 -->
-  <button class="teacher-guide-fab" onclick="openTeacherModal()">
-    👩‍🏫 교사용 수업 안내 & 모드 설정
-    <span class="mode-badge-pill" id="current-mode-badge">기본(이미지저장)</span>
-  </button>
-
-  <!-- 교사용 수업 활용 가이드 모달 -->
+  <!-- 교사용 수업 활용 가이드 모달 (담백한 안내창) -->
   <div class="teacher-modal-backdrop" id="teacher-modal-backdrop">
     <div class="teacher-modal">
       <h2>
-        <span>🕵️‍♂️ [당류 탐정 대탈출] 교사용 수업 활용 가이드</span>
+        <span>교사용 수업 안내</span>
         <button class="teacher-modal-close" onclick="closeTeacherModal()">닫기 ✕</button>
       </h2>
-      <p style="margin: 4px 0 12px 0; color: #94a3b8; font-size: 14px;">
-        전국 어디서나 별도 회원가입이나 서버 구축 없이 바로 수업에 활용하실 수 있도록 <strong>3가지 수업 운영 모드</strong>를 지원합니다.
-      </p>
 
-      <div class="mode-tabs">
-        <button class="mode-tab-btn active" id="tab-btn-1" onclick="switchModalTab(1)">
-          <strong>📸 버전 1. 이미지 보고서 제출 (기본)</strong>
-          <span>서버 연결 없이 학생 기기에 수사 보고서 이미지를 즉시 저장 (패들렛·클래스룸 제출용)</span>
-        </button>
-        <button class="mode-tab-btn" id="tab-btn-2" onclick="switchModalTab(2)">
-          <strong>📊 버전 2. 내 구글 시트로 결과 받기</strong>
-          <span>선생님 개인 구글 스프레드시트 주소를 연결해 우리 반 학생 응답을 실시간 표로 수집</span>
-        </button>
-        <button class="mode-tab-btn" id="tab-btn-3" onclick="switchModalTab(3)">
-          <strong>🔐 버전 3. 개발 교사 전용 대시보드</strong>
-          <span>지휘 통제실(실시간 문항 추적 대시보드) 연동 모드 (비밀번호 인증 필요)</span>
-        </button>
+      <div class="guide-section">
+        <h3>1. 기본 수업 방법 (수사 보고서 이미지 제출)</h3>
+        <p>별도 설정 없이 현재 주소로 바로 수업할 수 있습니다.<br>
+        학생이 방탈출 완료 후 <strong>[수사 보고서 이미지 저장]</strong> 버튼을 눌러 다운로드한 결과 이미지를 <strong>패들렛, 구글 클래스룸, 띵커벨, 오픈채팅방</strong> 등에 제출하도록 안내해 주세요.</p>
       </div>
 
-      <!-- 탭 1: 버전 1 설명 -->
-      <div class="mode-panel active" id="mode-panel-1">
-        <h3 style="margin-top:0; color:#ffcc00;">📸 버전 1: 수사 보고서 이미지 저장 모드 (현재 기본 설정)</h3>
-        <p>별도의 설정 없이 <strong>지금 이 웹앱 주소를 학생들에게 그대로 안내</strong>하시면 됩니다. 외부 데이터베이스에 학생의 개인정보(학번·이름)를 저장하지 않아 안전하며, 동시 접속 제한 없이 전국 모든 학급에서 쾌적하게 사용할 수 있습니다.</p>
-        
-        <div style="background: rgba(0, 255, 204, 0.08); border-left: 4px solid #00ffcc; padding: 14px; border-radius: 8px; margin: 14px 0;">
-          <strong style="color:#00ffcc; font-size: 16px;">💡 수업 및 과정중심평가 활용 팁 (이렇게 지도해 주세요!)</strong>
-          <ol style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li>학생들이 모든 방탈출 문항(Q1~Q13, 비밀 금고)을 해결하고 <strong>3단계 성찰 일지(새롭게 알게 된 점 / 깨달은 점 / 실천할 점)</strong>를 작성합니다.</li>
-            <li>완료 시 <strong>[1급 특수요원 임명장 + 문항별/스테이지별 오답·힌트 기록 + 3단계 성찰 일지]</strong>가 한 장의 결과 카드로 화면에 나타납니다.</li>
-            <li>화면 하단의 <strong>[📸 내 수사 보고서 이미지로 저장하기]</strong> 버튼을 누르면 고화질 이미지 파일(PNG)로 즉시 다운로드됩니다.</li>
-            <li>저장한 보고서 이미지를 아래 플랫폼에 업로드하여 제출하도록 안내하시면 <strong>수행평가 및 과정중심평가 근거 자료</strong>로 완벽하게 활용하실 수 있습니다!
-              <div style="margin-top: 8px;">
-                <span class="platform-pill">📌 패들렛 (Padlet)</span>
-                <span class="platform-pill">🏫 구글 클래스룸</span>
-                <span class="platform-pill">🔔 띵커벨 (Tkbell)</span>
-                <span class="platform-pill">💬 학급 오픈채팅방 / 하이클래스 / 위두랑</span>
-              </div>
-            </li>
-          </ol>
+      <div class="guide-section" style="margin-bottom:0;">
+        <h3>2. 내 구글 시트로 학생 결과 모으기 (선택)</h3>
+        <p>학생들의 응답(오답·힌트 횟수, 성찰 일지)을 선생님의 구글 시트로 직접 받으시려면 아래 순서대로 연결해 주세요.</p>
+        <div style="margin-top: 8px; font-size: 13.5px; color: #ddd;">
+          ① 새 구글 시트 생성 → <strong>[확장 프로그램] - [Apps Script]</strong>에 아래 코드 붙여넣기<br>
+          ② 우측 상단 <strong>[배포] - [새 배포] - 유형: 웹 앱 (액세스 권한: 모든 사용자)</strong> 배포
         </div>
-        <button class="small-btn" onclick="activateStandaloneMode()">✅ 버전 1 (기본 이미지 저장 모드)로 사용하기</button>
-      </div>
-
-      <!-- 탭 2: 버전 2 설명 -->
-      <div class="mode-panel" id="mode-panel-2">
-        <h3 style="margin-top:0; color:#00ffcc;">📊 버전 2: 선생님 개인 구글 시트(Google Sheets)로 실시간 수집하기</h3>
-        <p>선생님의 구글 드라이브에 스프레드시트를 하나 만들고 아래 스크립트를 붙여넣으면, <strong>우리 반 학생들의 풀이 기록(오답·힌트 횟수)과 성찰 일지(알게 된 점·깨달은 점·실천할 점)가 선생님의 구글 시트에 자동으로 차곡차곡 기록</strong>됩니다! (물론 학생 화면에서 이미지 저장도 동시에 가능합니다.)</p>
-
-        <div style="margin: 12px 0;">
-          <strong>1단계:</strong> 새 구글 스프레드시트를 열고 상단 메뉴 <strong>[확장 프로그램] → [Apps Script]</strong>를 클릭합니다.<br>
-          <strong>2단계:</strong> 기존 코드를 지우고 아래 코드를 복사해 붙여넣은 뒤, 우측 상단 <strong>[배포] → [새 배포] → 유형: '웹 앱' (액세스 권한: '모든 사용자')</strong>로 배포합니다.
-          <div class="code-copy-box" id="apps-script-code">function doPost(e) {
+        <div class="code-copy-box" id="apps-script-code">function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(["제출일시", "조이름", "학번", "이름", "참여조원", "총오답수", "총힌트수", "S1오답/힌트", "S2오답/힌트", "S3오답/힌트", "알게된점", "깨달은점(소감)", "실천할점", "소요시간(분초)"]);
@@ -483,37 +413,21 @@
   sheet.appendRow([new Date(), data.teamName, data.studentId, data.studentName, data.memberNames, data.wrongCount, data.hintCount, s1, s2, s3, data.learnedPoint, data.realizedPoint, data.actionPlan, timeStr]);
   return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
 }</div>
-          <button class="small-btn" onclick="copyAppsScriptCode()" style="background:#38bdf8;">📋 위 Apps Script 코드 복사하기</button>
-        </div>
+        <button class="small-btn" onclick="copyAppsScriptCode()">코드 복사</button>
 
-        <div style="margin-top: 16px; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px;">
-          <strong>3단계: 배포 후 발급된 '웹 앱 URL (https://script.google.com/macros/s/.../exec)'을 아래에 입력하세요.</strong>
-          <input type="text" id="custom-sheet-url" placeholder="https://script.google.com/macros/s/.../exec 주소 붙여넣기" style="margin: 8px 0; font-size: 14px; padding: 10px;">
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="small-btn" onclick="generateSheetClassLink()">🔗 우리 반 전용 접속 링크 생성 & 현재 기기 적용</button>
+        <div style="margin-top: 12px; border-top: 1px solid #333; padding-top: 10px;">
+          <div style="font-size: 13.5px; color:#ddd; margin-bottom: 4px;">③ 배포된 웹 앱 URL 입력 후 우리 반 전용 링크 생성</div>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="custom-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="margin: 0; font-size: 13px; padding: 8px; flex: 1;">
+            <button class="small-btn primary" onclick="generateSheetClassLink()" style="white-space: nowrap;">전용 링크 생성</button>
           </div>
-          <div id="generated-link-box" style="display:none; margin-top: 12px; padding: 12px; background:#090d16; border:1px solid #00ffcc; border-radius:8px;">
-            <div style="color:#00ffcc; font-weight:bold; margin-bottom:6px;">🎉 우리 반 전용 배포 링크가 완성되었습니다! (학생들에게 이 주소를 공유하거나 QR로 만들어 주세요)</div>
-            <input type="text" id="generated-link-input" readonly style="margin: 4px 0 8px 0; font-size: 13px; color:#ffcc00;">
-            <button class="small-btn" onclick="copyGeneratedLink()">📋 학생 배포용 링크 복사하기</button>
+          <div id="generated-link-box" style="display:none; margin-top: 10px; padding: 10px; background:#111; border:1px solid #444; border-radius:6px;">
+            <div style="font-size:12.5px; color:#ffcc00; margin-bottom:4px;">아래 생성된 주소를 학생들에게 공유하세요:</div>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" id="generated-link-input" readonly style="margin: 0; font-size: 12px; padding: 6px; color:#fff; flex:1;">
+              <button class="small-btn" onclick="copyGeneratedLink()" style="white-space: nowrap;">주소 복사</button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- 탭 3: 버전 3 설명 -->
-      <div class="mode-panel" id="mode-panel-3">
-        <h3 style="margin-top:0; color:#ff99cc;">🔐 버전 3: 개발 교사 전용 실시간 지휘통제실 연동 모드</h3>
-        <p>이 모드는 본 웹앱을 개발한 선생님의 수업 전용 파이어베이스 데이터베이스 및 <strong>실시간 지휘 통제실 대시보드(admin.html)</strong>와 연동되는 모드입니다.<br>
-        <span style="color:#94a3b8; font-size:13.5px;">※ 타 학교 선생님께서는 DB 용량 보호 및 개인정보 보호를 위해 <strong>버전 1(이미지 저장)</strong> 또는 <strong>버전 2(구글 시트 연동)</strong>를 이용해 주세요!</span></p>
-
-        <div style="margin-top: 14px; background: rgba(255, 51, 102, 0.08); border: 1px solid rgba(255, 51, 102, 0.3); padding: 16px; border-radius: 8px;">
-          <strong>🔑 교사 인증 비밀번호 입력</strong>
-          <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
-            <input type="password" id="teacher-secret-pw" placeholder="비밀번호 입력" style="margin: 0; max-width: 220px; padding: 10px;">
-            <button class="small-btn" onclick="activateTeacherFirebaseMode()" style="background:#ff3366; color:#fff;">인증 및 대시보드 연동 켜기</button>
-            <a href="admin.html" target="_blank" id="open-admin-link" style="display:none; color:#00ffcc; font-weight:bold; margin-left: 10px; text-decoration:underline;">👉 지휘 통제실(admin.html) 열기</a>
-          </div>
-          <div id="teacher-pw-msg" style="margin-top: 8px; font-size: 13.5px; color: #ffcc00;"></div>
         </div>
       </div>
     </div>
@@ -946,10 +860,11 @@
       </div>
     </div>
 
-    <div style="position: absolute; bottom: 5px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 13px; left: 0; z-index: 100;">
-      Developed By. Lee Jin Young | 
-      <a href="이용약관.md" target="_blank" style="color: rgba(255,255,255,0.3); text-decoration: underline; margin: 0 5px;">이용약관</a> | 
-      <a href="개인정보처리방침.md" target="_blank" style="color: rgba(255,255,255,0.3); text-decoration: underline; margin: 0 5px;">개인정보처리방침</a>
+    <div style="position: absolute; bottom: 6px; width: 100%; text-align: center; color: rgba(255,255,255,0.35); font-size: 13px; left: 0; z-index: 100;">
+      Developed By. <a href="javascript:void(0)" onclick="openDeveloperAccess()" style="color: rgba(255,255,255,0.45); text-decoration: none; cursor: pointer;" title="개발 교사 전용 모드 전환 / 지휘통제실">Lee Jin Young</a> <span id="dev-mode-dot" style="display:none; color:#00ffcc; font-size:11px;">●</span> | 
+      <a href="javascript:void(0)" onclick="openTeacherModal()" style="color: rgba(255,255,255,0.45); text-decoration: underline; margin: 0 5px;">교사용 수업안내</a> | 
+      <a href="이용약관.md" target="_blank" style="color: rgba(255,255,255,0.35); text-decoration: underline; margin: 0 5px;">이용약관</a> | 
+      <a href="개인정보처리방침.md" target="_blank" style="color: rgba(255,255,255,0.35); text-decoration: underline; margin: 0 5px;">개인정보처리방침</a>
     </div>
   </div>
 
@@ -1366,67 +1281,74 @@
     }
 
     function updateModeBadgeUI() {
-      const badge = document.getElementById('current-mode-badge');
       const submitBtn = document.getElementById('submitBtn');
-      const adminLink = document.getElementById('open-admin-link');
-      if (!badge) return;
+      const devDot = document.getElementById('dev-mode-dot');
 
       if (window.appMode === 'firebase') {
-        badge.innerText = '🔐 지휘통제실 연동중';
-        badge.style.color = '#ff668c';
-        badge.style.borderColor = '#ff3366';
-        badge.style.background = 'rgba(255,51,102,0.2)';
-        if (submitBtn) submitBtn.innerText = '수사 일지 서버 전송 및 보고서 발급';
-        if (adminLink) adminLink.style.display = 'inline-block';
+        if (submitBtn) submitBtn.innerText = '수사 일지 서버로 전송';
+        if (devDot) {
+          devDot.style.display = 'inline';
+          devDot.style.color = '#00ffcc';
+          devDot.title = '지휘통제실 연동중';
+        }
       } else if (window.appMode === 'sheet') {
-        badge.innerText = '📊 구글시트 연동중';
-        badge.style.color = '#00ffcc';
-        badge.style.borderColor = '#00ffcc';
-        badge.style.background = 'rgba(0,255,204,0.2)';
-        if (submitBtn) submitBtn.innerText = '구글 시트 제출 및 수사 보고서 발급';
-        if (adminLink) adminLink.style.display = 'none';
+        if (submitBtn) submitBtn.innerText = '구글 시트 제출 및 보고서 발급';
+        if (devDot) {
+          devDot.style.display = 'inline';
+          devDot.style.color = '#ffcc00';
+          devDot.title = '구글 시트 연동중';
+        }
       } else {
-        badge.innerText = '📸 기본(이미지저장)';
-        badge.style.color = '#ffcc00';
-        badge.style.borderColor = '#ffcc00';
-        badge.style.background = 'rgba(255,204,0,0.2)';
         if (submitBtn) submitBtn.innerText = '수사 일지 완료 및 보고서 발급';
-        if (adminLink) adminLink.style.display = 'none';
+        if (devDot) devDot.style.display = 'none';
       }
     }
 
     function openTeacherModal() {
       document.getElementById('teacher-modal-backdrop').classList.add('open');
-      if (window.appMode === 'sheet') switchModalTab(2);
-      else if (window.appMode === 'firebase') switchModalTab(3);
-      else switchModalTab(1);
     }
 
     function closeTeacherModal() {
       document.getElementById('teacher-modal-backdrop').classList.remove('open');
     }
 
-    function switchModalTab(tabNum) {
-      [1, 2, 3].forEach(n => {
-        document.getElementById('tab-btn-' + n).classList.toggle('active', n === tabNum);
-        document.getElementById('mode-panel-' + n).classList.toggle('active', n === tabNum);
-      });
-    }
+    function openDeveloperAccess() {
+      if (window.appMode === 'firebase') {
+        const choice = prompt("[개발 교사 전용 메뉴]\n현재 지휘통제실 연동 모드입니다.\n1: 지휘 통제실(admin.html) 열기\n2: 기본(이미지 저장) 모드로 되돌리기\n3: 학생 배포용 전용 링크(?mode=1120) 복사", "1");
+        if (choice === "1") {
+          window.open("admin.html", "_blank");
+        } else if (choice === "2") {
+          window.appMode = 'standalone';
+          localStorage.removeItem('sugarTeacherMode');
+          updateModeBadgeUI();
+          alert("기본(이미지 저장) 모드로 전환되었습니다.");
+        } else if (choice === "3") {
+          const link = window.location.origin + window.location.pathname + "?mode=1120";
+          navigator.clipboard.writeText(link);
+          alert("학생 배포용 전용 주소가 복사되었습니다:\n" + link);
+        }
+        return;
+      }
 
-    function activateStandaloneMode() {
-      window.appMode = 'standalone';
-      window.customSheetUrl = '';
-      localStorage.removeItem('sugarTeacherMode');
-      localStorage.removeItem('sugarCustomSheetUrl');
-      updateModeBadgeUI();
-      alert('버전 1 (기본 이미지 저장 모드)로 설정되었습니다! 학생들은 완료 후 수사 보고서를 이미지로 저장해 패들렛·클래스룸 등에 제출할 수 있습니다.');
-      closeTeacherModal();
+      const pw = prompt("교사 전용 비밀번호를 입력하세요:");
+      if (!pw) return;
+      if (pw.trim() === '1120') {
+        window.appMode = 'firebase';
+        localStorage.setItem('sugarTeacherMode', '1120');
+        localStorage.removeItem('sugarCustomSheetUrl');
+        updateModeBadgeUI();
+        if (confirm("지휘통제실 연동 모드가 켜졌습니다!\n교사용 대시보드(admin.html)를 새 창으로 여시겠습니까?")) {
+          window.open("admin.html", "_blank");
+        }
+      } else {
+        alert("비밀번호가 일치하지 않습니다.");
+      }
     }
 
     function copyAppsScriptCode() {
       const code = document.getElementById('apps-script-code').innerText;
       navigator.clipboard.writeText(code).then(() => {
-        alert('구글 Apps Script 코드가 복사되었습니다! 새 구글 시트의 [확장 프로그램] -> [Apps Script]에 붙여넣어 주세요.');
+        alert('코드가 복사되었습니다. 구글 시트 [확장 프로그램] - [Apps Script]에 붙여넣어 주세요.');
       });
     }
 
@@ -1452,24 +1374,8 @@
     function copyGeneratedLink() {
       const linkVal = document.getElementById('generated-link-input').value;
       navigator.clipboard.writeText(linkVal).then(() => {
-        alert('우리 반 전용 접속 링크가 복사되었습니다! 학생들에게 이 링크(또는 QR코드)를 안내해주세요.');
+        alert('우리 반 전용 접속 주소가 복사되었습니다.');
       });
-    }
-
-    function activateTeacherFirebaseMode() {
-      const pw = document.getElementById('teacher-secret-pw').value.trim();
-      const msgEl = document.getElementById('teacher-pw-msg');
-      if (pw === '1120') {
-        window.appMode = 'firebase';
-        localStorage.setItem('sugarTeacherMode', '1120');
-        localStorage.removeItem('sugarCustomSheetUrl');
-        updateModeBadgeUI();
-        msgEl.style.color = '#00ffcc';
-        msgEl.innerHTML = '✅ <strong>인증 성공!</strong> 현재 기기가 지휘 통제실(admin.html) 실시간 연동 모드로 설정되었습니다.<br>학생들에게 한번에 연동된 주소를 주시려면 <code>' + window.location.origin + window.location.pathname + '?mode=1120</code> 주소를 공유하세요!';
-      } else {
-        msgEl.style.color = '#ff3366';
-        msgEl.innerText = '❌ 비밀번호가 일치하지 않습니다.';
-      }
     }
 
     window.addEventListener('DOMContentLoaded', initAppModeFromUrl);
