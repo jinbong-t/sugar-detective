@@ -863,7 +863,7 @@
     </div>
 
     <div style="position: absolute; bottom: 6px; width: 100%; text-align: center; color: rgba(255,255,255,0.35); font-size: 13px; left: 0; z-index: 100;">
-      Developed By. <a href="javascript:void(0)" onclick="openDeveloperAccess()" style="color: rgba(255,255,255,0.45); text-decoration: none; cursor: pointer;" title="개발 교사 전용 모드 전환 / 지휘통제실">Lee Jin Young</a> <span id="dev-mode-dot" style="display:none; color:#00ffcc; font-size:11px;">●</span> | 
+      © <a href="javascript:void(0)" onclick="openDeveloperAccess()" style="color: rgba(255,255,255,0.55); text-decoration: none; cursor: pointer; font-family: 'Orbitron', sans-serif; font-weight: bold; letter-spacing: 1.5px;" title="개발 교사 전용 모드 전환 / 지휘통제실">LJY CORP.</a> <span id="dev-mode-dot" style="display:none; color:#00ffcc; font-size:11px;">●</span> | 
       <a href="javascript:void(0)" onclick="openTeacherModal()" style="color: rgba(255,255,255,0.45); text-decoration: underline; margin: 0 5px;">교사용 수업안내</a> | 
       <a href="이용약관.md" target="_blank" style="color: rgba(255,255,255,0.35); text-decoration: underline; margin: 0 5px;">이용약관</a> | 
       <a href="개인정보처리방침.md" target="_blank" style="color: rgba(255,255,255,0.35); text-decoration: underline; margin: 0 5px;">개인정보처리방침</a>
@@ -1462,58 +1462,56 @@
       page18.innerHTML = `
         <div class="grand-finale-overlay" id="grand-finale" style="display: flex;">
           <div class="matrix-bg"></div>
-          <div class="warning-text" style="font-size: 44px; margin-bottom: 4px;">SYSTEM OVERRIDE</div>
-          <div class="decrypting-text" style="font-size: 18px; margin-bottom: 12px;">데이터베이스 정보 갱신 중...</div>
+          <div class="warning-text" style="font-size: 52px; margin-bottom: 6px;">SYSTEM OVERRIDE</div>
+          <div class="decrypting-text" style="font-size: 20px; margin-bottom: 16px;">데이터베이스 정보 갱신 중...</div>
           
-          <div class="id-card-container" id="id-card" style="width: 780px; min-height: auto; padding-bottom: 16px;">
-            <div class="id-header" style="font-size: 19px; padding: 9px;">당류 탐정 수사대 1급 특수요원 임명장</div>
-            <div class="id-body" style="padding: 16px 22px 10px 22px; align-items: center;">
-              <div class="id-photo" style="width: 90px; height: 108px; font-size: 46px; margin-right: 20px; flex-shrink: 0;">🕵️‍♂️</div>
+          <div class="id-card-container" id="id-card" style="width: 760px; min-height: 480px; padding-bottom: 24px; justify-content: space-between;">
+            <div class="id-header" style="font-size: 23px; padding: 13px; letter-spacing: 3px;">당류 탐정 수사대 1급 특수요원 임명장</div>
+            <div class="id-body" style="padding: 22px 28px 16px 28px; align-items: center;">
+              <div class="id-photo" style="width: 126px; height: 158px; font-size: 66px; margin-right: 26px; flex-shrink: 0; border-radius: 6px;">🕵️‍♂️</div>
               <div class="id-info">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; padding-right: 185px; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 14px; padding-right: 195px; border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 12px;">
                   <div>
-                    <span>NAME (이름)</span>
-                    <p style="border:none; margin: 2px 0 0 0; padding:0; font-size: 19px; font-weight:bold; color:#ffffff;">${data.studentName}</p>
+                    <span style="font-size: 13.5px;">NAME (이름)</span>
+                    <p style="border:none; margin: 4px 0 0 0; padding:0; font-size: 23px; font-weight:bold; color:#ffffff;">${data.studentName}</p>
                   </div>
                   <div>
-                    <span>ID NO (학번)</span>
-                    <p style="border:none; margin: 2px 0 0 0; padding:0; font-size: 19px; font-weight:bold; color:#ffffff;">${data.studentId}</p>
+                    <span style="font-size: 13.5px;">ID NO (학번)</span>
+                    <p style="border:none; margin: 4px 0 0 0; padding:0; font-size: 23px; font-weight:bold; color:#ffffff;">${data.studentId}</p>
                   </div>
                   <div>
-                    <span>TEAM (소속 조 / 대원)</span>
-                    <p style="border:none; margin: 2px 0 0 0; padding:0; font-size: 16px; color:#ffffff;">${data.teamName} <small style="color:#cccccc;">(${data.memberNames})</small></p>
+                    <span style="font-size: 13.5px;">TEAM (소속 조 / 대원)</span>
+                    <p style="border:none; margin: 4px 0 0 0; padding:0; font-size: 19px; font-weight:bold; color:#ffffff;">${data.teamName} <small style="color:#cccccc; font-weight:normal;">(${data.memberNames})</small></p>
                   </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                  <div style="font-size: 13.5px; color: #ffcc00; line-height: 1.4; font-style: italic;">
-                    "식품 속에 숨겨진 당류의 유혹을 밝혀내고 건강을 지켜낸 탁월한 수사 능력을 인정하여 이 임명장을 수여합니다."
-                  </div>
-                  <div style="font-size: 12px; color: #00ffcc; background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.3); padding: 4px 10px; border-radius: 6px; white-space: nowrap;">
-                    ⏱ ${timeFormatted} | 오답 ${data.wrongCount} · 힌트 ${data.hintCount} <span style="color:#94a3b8;">(S1:${s1W}/${s1H} S2:${s2W}/${s2H} S3:${s3W}/${s3H})</span>
-                  </div>
+                <div style="font-size: 15.5px; color: #ffcc00; line-height: 1.55; font-style: italic; margin-bottom: 10px;">
+                  "식품 속에 숨겨진 당류의 유혹을 밝혀내고 건강을 지켜낸 탁월한 수사 능력을 인정하여 이 임명장을 수여합니다."
+                </div>
+                <div style="display: inline-block; font-size: 13.5px; color: #00ffcc; background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.35); padding: 6px 14px; border-radius: 6px;">
+                  ⏱ 소요시간: <strong>${timeFormatted}</strong> &nbsp;|&nbsp; 총 오답 <strong>${data.wrongCount}회</strong> · 힌트 <strong>${data.hintCount}회</strong> <span style="color:#cbd5e1; margin-left:4px;">(S1 개념 ${s1W}/${s1H} · S2 계산 ${s2W}/${s2H} · S3 적용 ${s3W}/${s3H})</span>
                 </div>
               </div>
             </div>
 
-            <div style="margin: 2px 22px 0 22px; padding-top: 10px; border-top: 1px dashed #444; display: flex; flex-direction: column; gap: 6px; text-align: left; font-size: 13.5px; color: #ffffff; line-height: 1.45;">
-              <div style="background: #111111; padding: 7px 12px; border-radius: 6px; border-left: 4px solid #ffcc00; word-break: break-all;">
-                <strong style="color:#ffcc00; margin-right: 6px;">💡 새롭게 알게 된 점:</strong>${data.learnedPoint}
+            <div style="margin: 4px 28px 0 28px; padding-top: 16px; border-top: 1px dashed #555; display: flex; flex-direction: column; gap: 10px; text-align: left; font-size: 15.5px; color: #ffffff; line-height: 1.55;">
+              <div style="background: #111111; padding: 11px 16px; border-radius: 8px; border-left: 5px solid #ffcc00; word-break: break-all;">
+                <strong style="color:#ffcc00; margin-right: 8px;">💡 새롭게 알게 된 점:</strong>${data.learnedPoint}
               </div>
-              <div style="background: #111111; padding: 7px 12px; border-radius: 6px; border-left: 4px solid #ff99cc; word-break: break-all;">
-                <strong style="color:#ff99cc; margin-right: 6px;">✨ 소감 및 깨달은 점:</strong>${data.realizedPoint}
+              <div style="background: #111111; padding: 11px 16px; border-radius: 8px; border-left: 5px solid #ff99cc; word-break: break-all;">
+                <strong style="color:#ff99cc; margin-right: 8px;">✨ 소감 및 깨달은 점:</strong>${data.realizedPoint}
               </div>
-              <div style="background: #111111; padding: 7px 12px; border-radius: 6px; border-left: 4px solid #00ffcc; word-break: break-all;">
-                <strong style="color:#00ffcc; margin-right: 6px;">🏃 앞으로 실천할 점:</strong>${data.actionPlan}
+              <div style="background: #111111; padding: 11px 16px; border-radius: 8px; border-left: 5px solid #00ffcc; word-break: break-all;">
+                <strong style="color:#00ffcc; margin-right: 8px;">🏃 앞으로 실천할 점:</strong>${data.actionPlan}
               </div>
             </div>
 
-            <div class="stamp-overlay" id="mission-stamp" style="top: 48px; right: 18px; font-size: 15px; padding: 5px 10px; letter-spacing: 0.5px;">MISSION ACCOMPLISHED</div>
+            <div class="stamp-overlay" id="mission-stamp" style="top: 62px; right: 22px; font-size: 16px; padding: 6px 12px; letter-spacing: 0.5px;">MISSION ACCOMPLISHED</div>
           </div>
           
-          <div class="congratulations-msg" id="congrats-msg" style="margin-top: 14px; font-size: 19px;">
+          <div class="congratulations-msg" id="congrats-msg" style="margin-top: 18px; font-size: 21px;">
             모든 수사가 끝났습니다. 화면을 캡처하거나 아래 버튼으로 임명장을 저장해 제출하세요!
-            <div style="margin-top: 8px;">
-              <button id="btn-download-img" onclick="downloadReportImage('${data.studentName.replace(/'/g, "")}', '${data.teamName.replace(/'/g, "")}')" style="background: #00ffcc; color: #000; border: none; padding: 9px 24px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: 'Gowun Dodum', sans-serif; box-shadow: 0 0 15px rgba(0,255,204,0.4);">
+            <div style="margin-top: 10px;">
+              <button id="btn-download-img" onclick="downloadReportImage('${data.studentName.replace(/'/g, "")}', '${data.teamName.replace(/'/g, "")}')" style="background: #00ffcc; color: #000; border: none; padding: 11px 28px; font-size: 17px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: 'Gowun Dodum', sans-serif; box-shadow: 0 0 15px rgba(0,255,204,0.4);">
                 📸 수사 보고서 이미지 저장
               </button>
             </div>
